@@ -113,7 +113,7 @@ var AppData = {
       var apiKey = key.replace('class39_', '');
       var xhr = new XMLHttpRequest();
       xhr.open('GET', '/api/data/' + apiKey + '?_t=' + Date.now(), false);
-      xhr.timeout = 3000;
+      xhr.timeout = 2000;
       xhr.send();
       if (xhr.status === 200) {
         var apiData = JSON.parse(xhr.responseText);
@@ -138,7 +138,7 @@ var AppData = {
             AppData._syncToCloud(key, resultStr, !(key.indexOf('messages') >= 0));
             return result;
           }
-          // 云端有数据且本地无数据，用云端
+          // 非数组或本地无数据：云端数据直接覆盖（hero_bg、banned_words 等不可合并类型）
           try { localStorage.setItem(key, xhr.responseText); } catch (e) {}
           return apiData;
         }
@@ -320,10 +320,17 @@ function injectNav(currentPage) {
   }
 
   var navbar = document.getElementById('navbar');
+  var scrollTicking = false;
   window.addEventListener('scroll', function () {
-    if (!navbar) return;
-    if (window.scrollY > 50) { navbar.classList.add('scrolled'); }
-    else { navbar.classList.remove('scrolled'); }
+    if (!scrollTicking) {
+      scrollTicking = true;
+      requestAnimationFrame(function () {
+        if (!navbar) return;
+        if (window.scrollY > 50) { navbar.classList.add('scrolled'); }
+        else { navbar.classList.remove('scrolled'); }
+        scrollTicking = false;
+      });
+    }
   });
 }
 

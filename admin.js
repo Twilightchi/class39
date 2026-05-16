@@ -465,6 +465,9 @@ function initGalleryPanel() {
     }
 
     if (fileInput.files && fileInput.files[0]) {
+      if (urlInput && urlInput.value.trim()) {
+        alert('检测到同时选择了文件和URL，将优先使用上传的图片文件');
+      }
       var reader = new FileReader();
       reader.onload = function (ev) {
         var img = new Image();

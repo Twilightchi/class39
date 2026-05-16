@@ -142,11 +142,6 @@ body {
   padding: 100px 20px 60px;
 }
 
-.hero.has-image {
-  background-size: cover;
-  background-position: center;
-  animation: none;
-}
 
 .hero.has-image .hero-overlay {
   background: rgba(0,0,0,0.35);
