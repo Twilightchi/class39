@@ -99,10 +99,40 @@ var AppData = {
     { id: 12, title: '晚自习后', cat: 'study', emoji: '🌙', img: '' }
   ],
 
+  _prefetchCache: {},
+
   // --- 通用读写（localStorage 优先 + API 云端同步）---
   _read: function (key, defaults) {
     var localData = null;
     var shortKey = key.replace('class39_', '');
+    // 0. 先检查预取缓存（异步预取的结果，避免同步 XHR）
+    var pf = this._prefetchCache[shortKey];
+    if (pf !== undefined && pf !== null) {
+      // 云端有数据：与本地合并或直接使用
+      if (Array.isArray(pf) && Array.isArray(localData) && localData.length > 0) {
+        // merge logic same as below
+        var merged2 = {}, item2;
+        for (var pi = 0; pi < pf.length; pi++) {
+          item2 = pf[pi];
+          if (item2 && item2.id != null) merged2[item2.id] = item2;
+        }
+        for (var pj = 0; pj < localData.length; pj++) {
+          item2 = localData[pj];
+          if (item2 && item2.id != null) merged2[item2.id] = item2;
+        }
+        var result2 = [];
+        for (var pk in merged2) { if (merged2.hasOwnProperty(pk)) result2.push(merged2[pk]); }
+        result2.sort(function (a, b) { return b.id - a.id; });
+        var resultStr2 = JSON.stringify(result2);
+        try { localStorage.setItem(key, resultStr2); } catch (e) {}
+        console.log('[Data] ' + shortKey + ' ← merge(prefetch+' + pf.length + '+local+' + localData.length + ')=' + result2.length);
+        return result2;
+      }
+      try { localStorage.setItem(key, JSON.stringify(pf)); } catch (e) {}
+      console.log('[Data] ' + shortKey + ' ← prefetch(' + (Array.isArray(pf) ? pf.length + '条' : typeof pf) + ')');
+      return pf;
+    }
+
     // 1. 先读 localStorage（最快，体验优先）
     try {
       var raw = localStorage.getItem(key);
@@ -448,3 +478,18 @@ function renderGallery(containerId, items, showDelete) {
 function padZero(n) {
   return n < 10 ? '0' + n : '' + n;
 }
+
+// ========== 异步预取云端数据（避免同步 XHR 阻塞）==========
+(function () {
+  if (typeof fetch === 'undefined') return;
+  var keys = ['notices', 'honors', 'gallery', 'hero_bg', 'messages', 'banned_words'];
+  var prefix = 'class39_';
+  keys.forEach(function (k) {
+    fetch('/api/data/' + k)
+      .then(function (r) { if (!r.ok) throw new Error('status ' + r.status); return r.text(); })
+      .then(function (text) {
+        try { AppData._prefetchCache[k] = JSON.parse(text); } catch (e) {}
+      })
+      .catch(function () { AppData._prefetchCache[k] = null; });
+  });
+})();
