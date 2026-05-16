@@ -99,30 +99,56 @@ var AppData = {
     { id: 12, title: '晚自习后', cat: 'study', emoji: '🌙', img: '' }
   ],
 
-  // --- 通用读写（API 优先 → localStorage → cookie 三保险）---
+  // --- 通用读写（localStorage 优先 + API 云端同步）---
   _read: function (key, defaults) {
-    // 1. 尝试云端 API（实现跨设备同步）
+    var localData = null;
+    // 1. 先读 localStorage（最快，体验优先）
+    try {
+      var raw = localStorage.getItem(key);
+      if (raw) localData = JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+
+    // 2. 尝试云端 API（拉取其他设备的更新）
     try {
       var apiKey = key.replace('class39_', '');
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', '/api/data/' + apiKey, false);
+      xhr.open('GET', '/api/data/' + apiKey + '?_t=' + Date.now(), false);
       xhr.timeout = 3000;
       xhr.send();
       if (xhr.status === 200) {
         var apiData = JSON.parse(xhr.responseText);
         if (apiData !== null) {
+          // 如果是数组，与本地数据按 id 合并（防止覆盖其他设备的留言）
+          if (Array.isArray(apiData) && Array.isArray(localData) && localData.length > 0) {
+            var merged = {}, item;
+            for (var ai = 0; ai < apiData.length; ai++) {
+              item = apiData[ai];
+              if (item && item.id != null) merged[item.id] = item;
+            }
+            for (var li = 0; li < localData.length; li++) {
+              item = localData[li];
+              if (item && item.id != null) merged[item.id] = item;
+            }
+            var result = [];
+            for (var mk in merged) { if (merged.hasOwnProperty(mk)) result.push(merged[mk]); }
+            result.sort(function (a, b) { return b.id - a.id; });
+            var resultStr = JSON.stringify(result);
+            try { localStorage.setItem(key, resultStr); } catch (e) {}
+            // 把合并结果异步推回云端（保证其他设备能拿到完整数据）
+            AppData._syncToCloud(key, resultStr, !(key.indexOf('messages') >= 0));
+            return result;
+          }
+          // 云端有数据且本地无数据，用云端
           try { localStorage.setItem(key, xhr.responseText); } catch (e) {}
           return apiData;
         }
       }
-    } catch (e) { /* API 不可用，回退本地 */ }
+    } catch (e) { /* API 不可用，用本地数据 */ }
 
-    // 2. 回退：localStorage
-    try {
-      var raw = localStorage.getItem(key);
-      if (raw) return JSON.parse(raw);
-    } catch (e) { /* ignore */ }
-    // 3. 回退：cookie
+    // 3. 回退：localStorage（已在上面读取）
+    if (localData) return localData;
+
+    // 4. 回退：cookie
     try {
       var cookies = document.cookie.split('; ');
       for (var i = 0; i < cookies.length; i++) {
@@ -132,47 +158,61 @@ var AppData = {
         }
       }
     } catch (e) { /* ignore */ }
+
     return JSON.parse(JSON.stringify(defaults));
   },
 
   _write: function (key, data, needsAuth) {
     var str = JSON.stringify(data);
 
-    // 1. 尝试云端 API（实现跨设备同步）
-    try {
-      var apiKey = key.replace('class39_', '');
-      var xhr = new XMLHttpRequest();
-      xhr.open('PUT', '/api/data/' + apiKey, false);
-      xhr.timeout = 5000;
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      if (needsAuth !== false) {
-        xhr.setRequestHeader('X-Admin-Password', '39ban2024');
-      }
-      xhr.send(str);
-      if (xhr.status === 200) {
-        try { localStorage.setItem(key, str); } catch (e) {}
-        return true;
-      }
-      var apiResp = JSON.parse(xhr.responseText);
-      if (apiResp.error) return apiResp.error;
-    } catch (e) { /* API 不可用，回退本地 */ }
-
-    // 2. 回退：localStorage
+    // 1. 先写 localStorage（主存储，瞬间完成）
     try {
       localStorage.setItem(key, str);
-      return true;
     } catch (e1) {
-      // 3. 回退：cookie
       try {
         if (str.length > 3500) {
           return '数据过大，请勿上传大图片，用图片URL代替';
         }
         document.cookie = key + '=' + encodeURIComponent(str) + ';path=/;max-age=31536000;SameSite=Lax';
-        return true;
       } catch (e2) {
         return 'Cookie写入失败：' + (e2.message || '未知');
       }
     }
+
+    // 2. 后台异步同步到云端（fire-and-forget，不阻塞不卡顿）
+    if (needsAuth !== false) {
+      AppData._syncToCloud(key, str, true);
+    } else {
+      AppData._syncToCloud(key, str, false);
+    }
+
+    return true;
+  },
+
+  // 云端同步辅助（异步 fetch，静默执行）
+  _syncToCloud: function (key, str, needsAuth) {
+    try {
+      var apiKey = key.replace('class39_', '');
+      var headers = { 'Content-Type': 'application/json' };
+      if (needsAuth) {
+        headers['X-Admin-Password'] = '39ban2024';
+      }
+      if (typeof fetch !== 'undefined') {
+        fetch('/api/data/' + apiKey, {
+          method: 'PUT',
+          headers: headers,
+          body: str
+        }).catch(function () {});
+      } else {
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', '/api/data/' + apiKey, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        if (needsAuth) {
+          xhr.setRequestHeader('X-Admin-Password', '39ban2024');
+        }
+        xhr.send(str);
+      }
+    } catch (e) { /* 云端不可达，数据已安全存于本地 */ }
   },
 
   // --- 公告 ---
@@ -207,7 +247,7 @@ var AppData = {
     return this._write('class39_hero_bg', bg);
   },
 
-  // --- 留言（公开写入，不发送管理员密码）---
+  // --- 留言（公开写入）---
   getMessages: function () {
     return this._read('class39_messages', []);
   },
@@ -272,14 +312,12 @@ function injectNav(currentPage) {
       '</div>' +
     '</nav>';
 
-  // 手机菜单切换
   var toggle = document.getElementById('menuToggle');
   var links = el.querySelector('.nav-links');
   if (toggle && links) {
     toggle.addEventListener('click', function () { links.classList.toggle('show'); });
   }
 
-  // 滚动效果
   var navbar = document.getElementById('navbar');
   window.addEventListener('scroll', function () {
     if (!navbar) return;
@@ -321,7 +359,6 @@ function initHeroBg() {
   if (!hero) return;
   var bg = AppData.getHeroBg();
 
-  // 预设渐变主题
   var gradients = {
     'default': 'linear-gradient(135deg, #667eea 0%, #4A90D9 30%, #5CB85C 60%, #F5A623 100%)',
     'purple':  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
