@@ -150,7 +150,7 @@ var AppData = {
 
     // 4. 回退：cookie
     try {
-      var cookies = document.cookie.split('; ');
+      var cookies = document.cookie.split(/;\s*/);
       for (var i = 0; i < cookies.length; i++) {
         var parts = cookies[i].split('=');
         if (parts[0] === key) {
@@ -377,12 +377,14 @@ function initHeroBg() {
   };
 
   if (bg.type === 'gradient') {
+    hero.classList.remove('has-image');
     hero.style.background = gradients[bg.value] || gradients['default'];
     hero.style.backgroundSize = (bg.value === 'default') ? '400% 400%' : '100% 100%';
     hero.style.animation = (bg.value === 'default') ? 'gradientShift 12s ease infinite' : 'none';
     hero.style.backgroundImage = '';
   } else if (bg.type === 'image') {
-    hero.style.background = 'url(' + bg.value + ') center/cover no-repeat';
+    hero.classList.add('has-image');
+    hero.style.background = 'url("' + bg.value + '") center/cover no-repeat';
     hero.style.animation = 'none';
   }
 }
@@ -401,7 +403,7 @@ function renderGallery(containerId, items, showDelete) {
 
     var innerHTML = '';
     if (photo.img) {
-      innerHTML += '<img src="' + photo.img + '" alt="' + escapeHTML(photo.title) + '" class="gallery-img">';
+      innerHTML += '<img src="' + escapeHTML(photo.img) + '" alt="' + escapeHTML(photo.title) + '" class="gallery-img">';
     } else {
       innerHTML += '<div class="gallery-placeholder"><span>' + (photo.emoji || '📷') + '</span><span>' + escapeHTML(photo.title) + '</span></div>';
     }

@@ -36,6 +36,7 @@
       var items = AppData.getGallery();
       if (items.length === 0) {
         document.getElementById('noGallery').style.display = 'block';
+        return;
       }
       renderGallery('galleryGrid', items, false);
 

@@ -92,6 +92,15 @@ function initHeroBgPanel() {
   }
   updatePresetSelection();
 
+  // 初始化预览显示当前已保存的背景
+  if (currentBg.type === 'image') {
+    preview.style.background = 'url("' + currentBg.value + '") center/cover no-repeat';
+    preview.style.backgroundImage = '';
+  } else if (currentBg.type === 'gradient') {
+    var pEl = document.querySelector('.bg-preset[data-gradient="' + selectedGradient + '"]');
+    if (pEl) preview.style.background = getComputedStyle(pEl).background;
+  }
+
   presets.forEach(function (p) {
     p.addEventListener('click', function () {
       selectedGradient = this.getAttribute('data-gradient');
@@ -133,7 +142,7 @@ function initHeroBgPanel() {
   btnSaveUrl.addEventListener('click', function () {
     var url = urlInput.value.trim();
     if (!url) return;
-    preview.style.background = 'url(' + url + ') center/cover no-repeat';
+    preview.style.background = 'url("' + url + '") center/cover no-repeat';
     preview.setAttribute('data-custom-bg', url);
     selectedGradient = null;
     updatePresetSelection();
@@ -145,7 +154,7 @@ function initHeroBgPanel() {
     if (customBg) {
       AppData.saveHeroBg({ type: 'image', value: customBg });
     } else {
-      AppData.saveHeroBg({ type: 'gradient', value: selectedGradient });
+      AppData.saveHeroBg({ type: 'gradient', value: selectedGradient || 'default' });
     }
     alert('首页背景已保存！请打开首页查看效果。');
   });

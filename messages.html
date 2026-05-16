@@ -148,7 +148,11 @@
           content: content,
           time: new Date().toISOString()
         });
-        AppData.saveMessages(msgs);
+        var saveResult = AppData.saveMessages(msgs);
+        if (saveResult !== true) {
+          alert('保存失败：' + (saveResult || '未知错误'));
+          return;
+        }
 
         form.reset();
         document.getElementById('charCount').textContent = '0';
