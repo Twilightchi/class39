@@ -145,7 +145,7 @@ var AppData = {
     return this._read('class39_notices', this._defaultNotices);
   },
   saveNotices: function (notices) {
-    this._write('class39_notices', notices);
+    return this._write('class39_notices', notices);
   },
 
   // --- 荣誉 ---
@@ -153,7 +153,7 @@ var AppData = {
     return this._read('class39_honors', this._defaultHonors);
   },
   saveHonors: function (honors) {
-    this._write('class39_honors', honors);
+    return this._write('class39_honors', honors);
   },
 
   // --- 相册 ---
@@ -161,7 +161,7 @@ var AppData = {
     return this._read('class39_gallery', this._defaultGallery);
   },
   saveGallery: function (items) {
-    this._write('class39_gallery', items);
+    return this._write('class39_gallery', items);
   },
 
   // --- 首页背景 ---
@@ -169,7 +169,7 @@ var AppData = {
     return this._read('class39_hero_bg', { type: 'gradient', value: 'default' });
   },
   saveHeroBg: function (bg) {
-    this._write('class39_hero_bg', bg);
+    return this._write('class39_hero_bg', bg);
   },
 
   // --- 留言 ---
@@ -177,7 +177,7 @@ var AppData = {
     return this._read('class39_messages', []);
   },
   saveMessages: function (msgs) {
-    this._write('class39_messages', msgs);
+    return this._write('class39_messages', msgs);
   },
 
   // --- 违禁词 ---
@@ -185,7 +185,7 @@ var AppData = {
     return this._read('class39_banned_words', []);
   },
   saveBannedWords: function (words) {
-    this._write('class39_banned_words', words);
+    return this._write('class39_banned_words', words);
   }
 };
 
