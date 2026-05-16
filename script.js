@@ -192,12 +192,12 @@ function injectNav(currentPage) {
   if (!el) return;
 
   var pages = [
-    { key: 'index',    href: 'index.html',    label: '首页' },
-    { key: 'notices',  href: 'notices.html',  label: '公告' },
-    { key: 'members',  href: 'members.html',  label: '班级成员' },
-    { key: 'honors',   href: 'honors.html',   label: '荣誉墙' },
-    { key: 'gallery',  href: 'gallery.html',  label: '班级相册' },
-    { key: 'messages', href: 'messages.html', label: '留言板' }
+    { key: 'index',    href: '/',              label: '首页' },
+    { key: 'notices',  href: '/notices',       label: '公告' },
+    { key: 'members',  href: '/members',       label: '班级成员' },
+    { key: 'honors',   href: '/honors',        label: '荣誉墙' },
+    { key: 'gallery',  href: '/gallery',       label: '班级相册' },
+    { key: 'messages', href: '/messages',      label: '留言板' }
   ];
 
   var linksHTML = '';
@@ -209,7 +209,7 @@ function injectNav(currentPage) {
   el.innerHTML =
     '<nav class="navbar" id="navbar">' +
       '<div class="nav-container">' +
-        '<a href="index.html" class="nav-logo">2024级39班</a>' +
+        '<a href="/" class="nav-logo">2024级39班</a>' +
         '<ul class="nav-links">' + linksHTML + '</ul>' +
         '<button class="menu-toggle" id="menuToggle" aria-label="菜单">&#9776;</button>' +
       '</div>' +
