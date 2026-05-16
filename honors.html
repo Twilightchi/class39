@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>荣誉墙 - 乐陵一中2024级39班</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="sharedNav"></div>
+
+  <section class="section" style="padding-top:100px;">
+    <div class="container">
+      <h2 class="section-title">班级荣誉墙</h2>
+      <p class="section-desc">我们共同奋斗的见证</p>
+      <div class="honors-grid" id="honorsGrid"></div>
+      <p id="noHonors" style="display:none;text-align:center;color:#999;padding:32px;">暂无荣誉记录</p>
+    </div>
+  </section>
+
+  <div id="sharedFooter"></div>
+
+  <script src="script.js"></script>
+  <script>
+    injectNav('honors');
+    injectFooter();
+
+    (function () {
+      var honors = AppData.getHonors();
+      var grid = document.getElementById('honorsGrid');
+
+      if (honors.length === 0) {
+        document.getElementById('noHonors').style.display = 'block';
+        return;
+      }
+
+      var icons = ['🏆','🥇','🎖️','🏅','⭐','🌟','💎','👑'];
+      for (var i = 0; i < honors.length; i++) {
+        var h = honors[i];
+        var card = document.createElement('div');
+        card.className = 'honor-card';
+        card.innerHTML =
+          '<div class="honor-icon">' + (icons[i % icons.length]) + '</div>' +
+          '<div><h3>' + escapeHTML(h.title) + '</h3>' +
+          '<span class="honor-year">' + escapeHTML(h.year) + '</span></div>';
+        grid.appendChild(card);
+      }
+    })();
+  </script>
+</body>
+</html>

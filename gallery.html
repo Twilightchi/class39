@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>班级相册 - 乐陵一中2024级39班</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="sharedNav"></div>
+
+  <section class="section section-alt" style="padding-top:100px;">
+    <div class="container">
+      <h2 class="section-title">班级相册</h2>
+      <p class="section-desc">定格每一个珍贵瞬间</p>
+      <div class="gallery-filter">
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="study">学习时光</button>
+        <button class="filter-btn" data-filter="sports">运动风采</button>
+        <button class="filter-btn" data-filter="activity">班级活动</button>
+      </div>
+      <div class="gallery-grid" id="galleryGrid"></div>
+      <p id="noGallery" style="display:none;text-align:center;color:#999;padding:32px;">暂无照片</p>
+    </div>
+  </section>
+
+  <div id="sharedFooter"></div>
+
+  <script src="script.js"></script>
+  <script>
+    injectNav('gallery');
+    injectFooter();
+
+    (function () {
+      var items = AppData.getGallery();
+      if (items.length === 0) {
+        document.getElementById('noGallery').style.display = 'block';
+      }
+      renderGallery('galleryGrid', items, false);
+
+      // 筛选
+      var filterBtns = document.querySelectorAll('.filter-btn');
+      filterBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          filterBtns.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          var filter = btn.getAttribute('data-filter');
+          document.querySelectorAll('.gallery-item').forEach(function (item) {
+            item.style.display = (filter === 'all' || item.getAttribute('data-cat') === filter) ? '' : 'none';
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>乐陵一中2024级39班 - 青春纪念册</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="sharedNav"></div>
+
+  <!-- ========== 首页 Hero ========== -->
+  <section class="hero" id="heroSection">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <span class="hero-badge">乐陵一中</span>
+      <h1 class="hero-title">2024级39班</h1>
+      <p class="hero-subtitle">激情澎湃，三九不败，斗志昂扬，三九最强</p>
+      <p class="hero-desc">我们是一个由 <strong>52</strong> 位同学组成的温暖大家庭，在高二这段奋斗的时光里，我们并肩前行，共同成长。</p>
+
+      <div class="countdown-box">
+        <div class="countdown-icon">&#x1F4DA;</div>
+        <div class="countdown-text">
+          <span class="countdown-label">距离高考还有</span>
+          <span class="countdown-number" id="countdownDays">--</span>
+          <span class="countdown-label">天</span>
+        </div>
+        <div class="countdown-date">2027年6月7日</div>
+      </div>
+    </div>
+    <div class="hero-scroll-hint">
+      <span>向下滚动查看导航</span>
+      <div class="scroll-arrow">&#8595;</div>
+    </div>
+  </section>
+
+  <div id="sharedFooter"></div>
+
+  <script src="script.js"></script>
+  <script>
+    injectNav('index');
+    injectFooter();
+    initCountdown();
+    initHeroBg();
+  </script>
+</body>
+</html>

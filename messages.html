@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>留言板 - 乐陵一中2024级39班</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="sharedNav"></div>
+
+  <section class="section" style="padding-top:100px;">
+    <div class="container">
+      <h2 class="section-title">班级留言板</h2>
+      <p class="section-desc">写下你想对班级说的话</p>
+
+      <div class="message-form-box">
+        <form class="message-form" id="messageForm">
+          <!-- 留言类型选择器 -->
+          <div class="msg-type-selector" id="msgTypeSelector">
+            <button type="button" class="msg-type-btn active" data-type="real">实名留言</button>
+            <button type="button" class="msg-type-btn" data-type="nick">网名留言</button>
+            <button type="button" class="msg-type-btn" data-type="anon">匿名留言</button>
+          </div>
+
+          <!-- 实名选择 -->
+          <div id="realNameRow" class="form-row">
+            <select class="real-name-select" id="realNameSelect">
+              <option value="">-- 请选择你的名字 --</option>
+              <optgroup label="教师">
+              </optgroup>
+              <optgroup label="同学">
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- 网名输入 -->
+          <div id="nickNameRow" class="form-row" style="display:none;">
+            <input type="text" id="nickName" placeholder="输入你的昵称（不超过10字）" maxlength="10">
+          </div>
+
+          <!-- 匿名提示 -->
+          <div id="anonHint" style="display:none;margin-bottom:14px;padding:8px 16px;background:#f8f8f8;border-radius:8px;font-size:13px;color:#999;">
+            匿名留言不会显示你的身份信息
+          </div>
+
+          <div class="form-row">
+            <input type="text" id="msgTitle" placeholder="留言标题（选填）" maxlength="30">
+          </div>
+          <textarea id="msgContent" placeholder="写下你想说的话..." required maxlength="300" rows="3"></textarea>
+          <div class="form-footer">
+            <span class="char-count"><span id="charCount">0</span>/300</span>
+            <button type="submit" class="btn-submit">发布留言</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="messages-list" id="messagesList"></div>
+    </div>
+  </section>
+
+  <div id="sharedFooter"></div>
+
+  <script src="script.js"></script>
+  <script>
+    injectNav('messages');
+    injectFooter();
+
+    (function () {
+      var currentType = 'real';
+
+      // 填充实名选择器
+      var select = document.getElementById('realNameSelect');
+      var teacherGroup = select.querySelector('optgroup[label="教师"]');
+      var studentGroup = select.querySelector('optgroup[label="同学"]');
+
+      CLASS_DATA.teachers.forEach(function (t) {
+        var opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = t.name + '（' + t.role + '）';
+        teacherGroup.appendChild(opt);
+      });
+
+      CLASS_DATA.students.forEach(function (s) {
+        var opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = s.name + (s.role ? '（' + s.role + '）' : '');
+        studentGroup.appendChild(opt);
+      });
+
+      // 类型切换
+      var typeBtns = document.querySelectorAll('.msg-type-btn');
+      var realNameRow = document.getElementById('realNameRow');
+      var nickNameRow = document.getElementById('nickNameRow');
+      var anonHint = document.getElementById('anonHint');
+
+      typeBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          typeBtns.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          currentType = btn.getAttribute('data-type');
+
+          realNameRow.style.display = (currentType === 'real') ? '' : 'none';
+          nickNameRow.style.display = (currentType === 'nick') ? '' : 'none';
+          anonHint.style.display = (currentType === 'anon') ? '' : 'none';
+        });
+      });
+
+      // 提交
+      var form = document.getElementById('messageForm');
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var title = document.getElementById('msgTitle').value.trim();
+        var content = document.getElementById('msgContent').value.trim();
+        if (!content) return;
+
+        // 违禁词检查
+        var hit = checkBannedWords(content);
+        if (hit) {
+          alert('留言内容包含违规词语，请修改后重新提交。');
+          return;
+        }
+
+        var name = '';
+        if (currentType === 'real') {
+          name = select.value;
+          if (!name) { alert('请选择你的名字'); return; }
+        } else if (currentType === 'nick') {
+          name = document.getElementById('nickName').value.trim();
+          if (!name) { alert('请输入你的昵称'); return; }
+          // 网名也检查违禁词
+          var hitName = checkBannedWords(name);
+          if (hitName) {
+            alert('昵称包含违规词语，请修改。');
+            return;
+          }
+        } else {
+          name = '匿名同学';
+        }
+
+        var msgs = AppData.getMessages();
+        msgs.push({
+          id: Date.now(),
+          type: currentType,
+          name: name,
+          title: title,
+          content: content,
+          time: new Date().toISOString()
+        });
+        AppData.saveMessages(msgs);
+
+        form.reset();
+        document.getElementById('charCount').textContent = '0';
+        // 恢复默认
+        if (currentType === 'real') { select.value = ''; }
+        renderMessages();
+      });
+
+      // 字数统计
+      document.getElementById('msgContent').addEventListener('input', function () {
+        document.getElementById('charCount').textContent = this.value.length;
+      });
+
+      // 渲染留言
+      function renderMessages() {
+        var list = document.getElementById('messagesList');
+        var msgs = AppData.getMessages();
+
+        if (msgs.length === 0) {
+          list.innerHTML = '<p style="text-align:center;color:#999;padding:32px;">还没有留言，快来写下第一条吧~</p>';
+          return;
+        }
+
+        var typeLabels = { real: '实名', nick: '网名', anon: '匿名' };
+        var typeClasses = { real: 'msg-type-real', nick: 'msg-type-nick', anon: 'msg-type-anon' };
+
+        list.innerHTML = '';
+        for (var i = msgs.length - 1; i >= 0; i--) {
+          var msg = msgs[i];
+          var time = new Date(msg.time);
+          var timeStr = time.getFullYear() + '-' + padZero(time.getMonth() + 1) + '-' +
+            padZero(time.getDate()) + ' ' + padZero(time.getHours()) + ':' + padZero(time.getMinutes());
+
+          var item = document.createElement('div');
+          item.className = 'message-item';
+          item.innerHTML =
+            '<div class="message-header">' +
+              '<div>' +
+                '<span class="msg-type-tag ' + typeClasses[msg.type] + '">' + typeLabels[msg.type] + '</span>' +
+                '<span class="message-author">' + escapeHTML(msg.name) + '</span>' +
+              '</div>' +
+              '<span class="message-time">' + timeStr + '</span>' +
+            '</div>' +
+            (msg.title ? '<div class="message-title">' + escapeHTML(msg.title) + '</div>' : '') +
+            '<div class="message-body">' + escapeHTML(msg.content) + '</div>';
+
+          list.appendChild(item);
+        }
+      }
+
+      renderMessages();
+    })();
+  </script>
+</body>
+</html>

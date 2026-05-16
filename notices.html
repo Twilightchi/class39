@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>公告通知 - 乐陵一中2024级39班</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="sharedNav"></div>
+
+  <section class="section" style="padding-top:100px;">
+    <div class="container">
+      <h2 class="section-title">公告通知</h2>
+      <p class="section-desc">班级最新消息和重要提醒</p>
+      <div class="notices-grid" id="noticesGrid"></div>
+      <p id="noNotices" style="display:none;text-align:center;color:#999;padding:32px;">暂无公告</p>
+    </div>
+  </section>
+
+  <div id="sharedFooter"></div>
+
+  <script src="script.js"></script>
+  <script>
+    injectNav('notices');
+    injectFooter();
+
+    (function () {
+      var notices = AppData.getNotices();
+      var grid = document.getElementById('noticesGrid');
+
+      if (notices.length === 0) {
+        document.getElementById('noNotices').style.display = 'block';
+        return;
+      }
+
+      var tagClassMap = { '重要': 'notice-important', '通知': '', '作业': '' };
+      var tagSpanClassMap = { '重要': '', '通知': 'notice-tag-info', '作业': 'notice-tag-info' };
+
+      for (var i = notices.length - 1; i >= 0; i--) {
+        var n = notices[i];
+        var card = document.createElement('div');
+        card.className = 'notice-card ' + (tagClassMap[n.tag] || '');
+        card.innerHTML =
+          '<span class="notice-tag ' + (tagSpanClassMap[n.tag] || 'notice-tag-info') + '">' + escapeHTML(n.tag) + '</span>' +
+          '<h3>' + escapeHTML(n.title) + '</h3>' +
+          '<p>' + escapeHTML(n.content) + '</p>' +
+          '<span class="notice-date">' + escapeHTML(n.date) + '</span>';
+        grid.appendChild(card);
+      }
+    })();
+  </script>
+</body>
+</html>

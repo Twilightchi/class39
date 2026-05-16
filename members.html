@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>班级成员 - 乐陵一中2024级39班</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="sharedNav"></div>
+
+  <section class="section section-alt" style="padding-top:100px;">
+    <div class="container">
+      <h2 class="section-title">班级成员</h2>
+      <p class="section-desc">乐陵一中2024级39班，52位追梦少年</p>
+
+      <h3 class="subsection-title">教师团队</h3>
+      <div class="teachers-grid" id="teachersGrid"></div>
+
+      <h3 class="subsection-title">班级同学</h3>
+      <div class="members-grid" id="membersGrid"></div>
+    </div>
+  </section>
+
+  <div id="sharedFooter"></div>
+
+  <script src="script.js"></script>
+  <script>
+    injectNav('members');
+    injectFooter();
+
+    var emojiPool = ['😊','😄','😇','😎','😍','🤓','😌','🤗','😜','🙂','😏','😋','🙇','🧐','😆','😁','🙆','🧑','😸','😹','🐶','🙃','🧘','🐱','👍','🌸','🚀','🎵','🌍','🏀','💧','🌈','📚','☁️','❄️','⭐','🌹','🥇','🌧️','☀️','🦋','🌊','🥂','🕊️','🍃','🐉','🌟','💡','🎯','✨','🔥','💎'];
+
+    // 教师
+    var tGrid = document.getElementById('teachersGrid');
+    CLASS_DATA.teachers.forEach(function (t) {
+      var card = document.createElement('div');
+      card.className = 'teacher-card';
+      card.innerHTML =
+        '<div class="teacher-avatar">' + t.emoji + '</div>' +
+        '<div class="teacher-info">' +
+          '<h3>' + t.name + '</h3>' +
+          '<span class="teacher-role">' + t.role + '</span>' +
+        '</div>';
+      tGrid.appendChild(card);
+    });
+
+    // 学生
+    var sGrid = document.getElementById('membersGrid');
+    CLASS_DATA.students.forEach(function (s, i) {
+      var emoji = emojiPool[i % emojiPool.length];
+      var card = document.createElement('div');
+      card.className = 'member-card';
+      card.innerHTML =
+        '<div class="member-avatar">' + emoji + '</div>' +
+        '<div class="member-name">' + s.name + '</div>' +
+        (s.role ? '<div class="member-role-tag">' + s.role + '</div>' : '');
+      sGrid.appendChild(card);
+    });
+  </script>
+</body>
+</html>
