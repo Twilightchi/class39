@@ -1,0 +1,16 @@
+# Cloudflare Pages 项目配置
+# 项目名: class39
+# 域名: class39.pages.dev
+
+name = "class39"
+compatibility_date = "2025-01-01"
+
+# Pages Functions 会自动从 functions/ 目录部署
+# KV 命名空间需要在 Cloudflare Dashboard 中手动绑定：
+#   Pages → class39 → Settings → Functions → KV namespace bindings
+#   变量名: CLASS39_DATA
+#   命名空间: 创建一个新的 KV 命名空间
+
+# [[kv_namespaces]]
+# binding = "CLASS39_DATA"
+# id = "在 Dashboard 创建 KV 后填入 ID"

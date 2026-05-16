@@ -73,10 +73,10 @@ var CLASS_DATA = {
 var AppData = {
   // --- 默认数据 ---
   _defaultNotices: [
-    { id: 1, title: '本周作业清单', content: '数学：配套练习册第三章全部；语文：文言文翻译两篇；英语：阅读理解专项练习4篇。', tag: '作业', date: '2026-05-15' },
-    { id: 2, title: '学习小组成立通知', content: '为备战期末考试，班级将组建6个学习互助小组，每组设组长一人。请同学们自由组合，本周五前报到班长处。', tag: '通知', date: '2026-05-14' },
-    { id: 3, title: '班级纪律提醒', content: '近期迟到现象有所增加，请全体同学严格遵守作息时间。早自习7:20前到班，下午2:00前到班。', tag: '重要', date: '2026-05-13' },
-    { id: 4, title: '卫生值日表更新', content: '新一轮值日表已张贴在教室公告栏，请各值日小组按新表执行，当天值日生需在放学后完成教室清洁。', tag: '通知', date: '2026-05-12' }
+    { id: 1, title: '本周作业清单', content: '语文：背诵课本4首古诗 数学：周五学案完成 英语：学案改错整理', tag: '作业', date: '2026-05-15' },
+    { id: 2, title: '返校通知', content: '5月17号下午3：30之前到班', tag: '通知', date: '2026-05-14' },
+    { id: 3, title: '班级纪律提醒', content: '早上6：30之前到班，中午14：05之前到班。晚饭后18：05之前到班', tag: '重要', date: '2026-05-13' },
+    { id: 4, title: '卫生值日表更新', content: '期中考试后，擦黑板和倒垃圾的同学打扫卫生区', tag: '通知', date: '2026-05-12' }
   ],
 
   _defaultHonors: [
@@ -99,14 +99,30 @@ var AppData = {
     { id: 12, title: '晚自习后', cat: 'study', emoji: '🌙', img: '' }
   ],
 
-  // --- 通用读写（localStorage + cookie 双保险）---
+  // --- 通用读写（API 优先 → localStorage → cookie 三保险）---
   _read: function (key, defaults) {
-    // 先试 localStorage
+    // 1. 尝试云端 API（实现跨设备同步）
+    try {
+      var apiKey = key.replace('class39_', '');
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/api/data/' + apiKey, false);
+      xhr.timeout = 3000;
+      xhr.send();
+      if (xhr.status === 200) {
+        var apiData = JSON.parse(xhr.responseText);
+        if (apiData !== null) {
+          try { localStorage.setItem(key, xhr.responseText); } catch (e) {}
+          return apiData;
+        }
+      }
+    } catch (e) { /* API 不可用，回退本地 */ }
+
+    // 2. 回退：localStorage
     try {
       var raw = localStorage.getItem(key);
       if (raw) return JSON.parse(raw);
     } catch (e) { /* ignore */ }
-    // 再试 cookie
+    // 3. 回退：cookie
     try {
       var cookies = document.cookie.split('; ');
       for (var i = 0; i < cookies.length; i++) {
@@ -119,16 +135,35 @@ var AppData = {
     return JSON.parse(JSON.stringify(defaults));
   },
 
-  _write: function (key, data) {
+  _write: function (key, data, needsAuth) {
     var str = JSON.stringify(data);
-    // 试 localStorage
+
+    // 1. 尝试云端 API（实现跨设备同步）
+    try {
+      var apiKey = key.replace('class39_', '');
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', '/api/data/' + apiKey, false);
+      xhr.timeout = 5000;
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      if (needsAuth !== false) {
+        xhr.setRequestHeader('X-Admin-Password', '39ban2024');
+      }
+      xhr.send(str);
+      if (xhr.status === 200) {
+        try { localStorage.setItem(key, str); } catch (e) {}
+        return true;
+      }
+      var apiResp = JSON.parse(xhr.responseText);
+      if (apiResp.error) return apiResp.error;
+    } catch (e) { /* API 不可用，回退本地 */ }
+
+    // 2. 回退：localStorage
     try {
       localStorage.setItem(key, str);
       return true;
     } catch (e1) {
-      // localStorage 失败，试 cookie
+      // 3. 回退：cookie
       try {
-        // cookie 最大 4KB，超限则拒绝
         if (str.length > 3500) {
           return '数据过大，请勿上传大图片，用图片URL代替';
         }
@@ -172,12 +207,12 @@ var AppData = {
     return this._write('class39_hero_bg', bg);
   },
 
-  // --- 留言 ---
+  // --- 留言（公开写入，不发送管理员密码）---
   getMessages: function () {
     return this._read('class39_messages', []);
   },
   saveMessages: function (msgs) {
-    return this._write('class39_messages', msgs);
+    return this._write('class39_messages', msgs, false);
   },
 
   // --- 违禁词 ---
