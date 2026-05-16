@@ -7,7 +7,8 @@ const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
-  'Content-Type': 'application/json'
+  'Content-Type': 'application/json; charset=utf-8',
+  'Cache-Control': 'no-store, no-cache, must-revalidate'
 };
 
 const ADMIN_PASSWORD = '39ban2024';

@@ -113,7 +113,7 @@ var AppData = {
       var apiKey = key.replace('class39_', '');
       var xhr = new XMLHttpRequest();
       xhr.open('GET', '/api/data/' + apiKey + '?_t=' + Date.now(), false);
-      xhr.timeout = 2000;
+      xhr.timeout = 5000;
       xhr.send();
       if (xhr.status === 200) {
         var apiData = JSON.parse(xhr.responseText);
@@ -193,7 +193,7 @@ var AppData = {
   _syncToCloud: function (key, str, needsAuth) {
     try {
       var apiKey = key.replace('class39_', '');
-      var headers = { 'Content-Type': 'application/json' };
+      var headers = { 'Content-Type': 'application/json; charset=utf-8' };
       if (needsAuth) {
         headers['X-Admin-Password'] = '39ban2024';
       }
@@ -201,12 +201,17 @@ var AppData = {
         fetch('/api/data/' + apiKey, {
           method: 'PUT',
           headers: headers,
-          body: str
-        }).catch(function () {});
+          body: str,
+          keepalive: true
+        }).then(function (r) {
+          if (!r.ok) console.warn('[Sync] PUT ' + apiKey + ' failed: ' + r.status);
+        }).catch(function (e) {
+          console.warn('[Sync] PUT ' + apiKey + ' error: ' + (e.message || ''));
+        });
       } else {
         var xhr = new XMLHttpRequest();
         xhr.open('PUT', '/api/data/' + apiKey, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
         if (needsAuth) {
           xhr.setRequestHeader('X-Admin-Password', '39ban2024');
         }
