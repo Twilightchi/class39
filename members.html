@@ -32,6 +32,11 @@
     injectFooter();
 
     var emojiPool = ['😊','😄','😇','😎','😍','🤓','😌','🤗','😜','🙂','😏','🙇','😋','🧐','😆','😁','🙆','🧑','😸','😹','🐷','🙃','🧘','🐱','👍','🌸','🚀','🎵','🌍','🏀','💧','🌈','📚','☁️','❄️','⭐','🌹','🥇','🌧️','☀️','🦋','🌊','🥂','🕊️','🍃','🐉','🌟','💡','🎯','✨','🔥','💎'];
+    // 随机打乱表情池，每次打开网站每个同学的头像随机变化
+    for (var ei = emojiPool.length - 1; ei > 0; ei--) {
+      var ej = Math.floor(Math.random() * (ei + 1));
+      var tmp = emojiPool[ei]; emojiPool[ei] = emojiPool[ej]; emojiPool[ej] = tmp;
+    }
     // 教师
     var tGrid = document.getElementById('teachersGrid');
     CLASS_DATA.teachers.forEach(function (t) {
