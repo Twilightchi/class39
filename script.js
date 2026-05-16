@@ -171,6 +171,7 @@ var AppData = {
 
   _write: function (key, data, needsAuth) {
     var str = JSON.stringify(data);
+    var shortKey = key.replace('class39_', '');
 
     // 1. 先写 localStorage（主存储，瞬间完成）
     try {
@@ -186,11 +187,24 @@ var AppData = {
       }
     }
 
-    // 2. 后台异步同步到云端（fire-and-forget，不阻塞不卡顿）
-    if (needsAuth !== false) {
-      AppData._syncToCloud(key, str, true);
-    } else {
-      AppData._syncToCloud(key, str, false);
+    // 2. 同步写入云端（用同步 XHR 确保数据一定到达 KV）
+    var syncOk = false;
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open('PUT', '/api/data/' + shortKey, false);  // 同步模式：必须等响应
+      xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+      if (needsAuth !== false) {
+        xhr.setRequestHeader('X-Admin-Password', '39ban2024');
+      }
+      xhr.timeout = 8000;
+      xhr.send(str);
+      syncOk = (xhr.status === 200);
+    } catch (e) {
+      console.warn('[Sync] PUT ' + shortKey + ' 失败: ' + (e.message || ''));
+    }
+    if (!syncOk) {
+      // 同步失败时，后台再用异步重试一次
+      AppData._syncToCloud(key, str, needsAuth !== false);
     }
 
     return true;
