@@ -109,7 +109,8 @@ function initHeroBgPanel() {
     reader.onload = function (e) {
       // 压缩图片
       var img = new Image();
-      img.onload = function () {
+      img.onerror = function () { alert('图片加载失败，请检查文件格式'); };
+            img.onload = function () {
         var canvas = document.createElement('canvas');
         var maxW = 800;
         var scale = Math.min(1, maxW / img.width);
@@ -269,7 +270,7 @@ function initNoticesPanel() {
       document.getElementById('noticeCancel').style.display = 'none';
     } else {
       notices.push({
-        id: Date.now(),
+        id: Date.now() + Math.random(),
         title: data.title,
         content: data.content,
         tag: data.tag,
@@ -376,7 +377,7 @@ function initHonorsPanel() {
       document.getElementById('honorSubmit').textContent = '添加荣誉';
       document.getElementById('honorCancel').style.display = 'none';
     } else {
-      honors.push({ id: Date.now(), title: data.title, year: data.year });
+      honors.push({ id: Date.now() + Math.random(), title: data.title, year: data.year });
     }
     var result = AppData.saveHonors(honors);
     if (result === true) {
@@ -410,7 +411,7 @@ function initGalleryPanel() {
 
       var inner = '';
       if (photo.img) {
-        inner += '<img src="' + photo.img + '" alt="' + escapeHTML(photo.title) + '">';
+        inner += '<img src="' + escapeHTML(photo.img) + '" alt="' + escapeHTML(photo.title) + '">';
       } else {
         inner += '<div class="mini-placeholder"><span>' + (photo.emoji || '📷') + '</span><span>' + escapeHTML(photo.title) + '</span></div>';
       }
@@ -445,7 +446,7 @@ function initGalleryPanel() {
     function doAdd(finalImg) {
       var items = AppData.getGallery();
       items.push({
-        id: Date.now(),
+        id: Date.now() + Math.random(),
         title: title,
         cat: cat,
         emoji: '',
@@ -467,6 +468,7 @@ function initGalleryPanel() {
       var reader = new FileReader();
       reader.onload = function (ev) {
         var img = new Image();
+        img.onerror = function () { alert("图片加载失败，请检查文件格式"); };
         img.onload = function () {
           var canvas = document.createElement('canvas');
           var maxW = 400;

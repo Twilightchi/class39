@@ -278,6 +278,7 @@ function checkBannedWords(text) {
 
 // ========== HTML 转义 ==========
 function escapeHTML(str) {
+  if (str == null) return '';
   var div = document.createElement('div');
   div.appendChild(document.createTextNode(str));
   return div.innerHTML;
