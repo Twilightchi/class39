@@ -110,11 +110,12 @@ var AppData = {
 
   _write: function (key, data) {
     try {
-      localStorage.setItem(key, JSON.stringify(data));
+      var str = JSON.stringify(data);
+      localStorage.setItem(key, str);
       return true;
     } catch (e) {
-      console.error('保存数据失败:', key, e);
-      return false;
+      console.error('保存失败:', key, e.name, e.message);
+      return e.message || 'unknown';
     }
   },
 

@@ -267,11 +267,11 @@ function initNoticesPanel() {
         date: data.date
       });
     }
-    var ok = AppData.saveNotices(notices);
-    if (ok) {
-      alert('公告已保存！刷新班级网站页面即可看到更新。');
+    var result = AppData.saveNotices(notices);
+    if (result === true) {
+      alert('公告已保存！');
     } else {
-      alert('保存失败！请检查浏览器存储空间。');
+      alert('保存失败：' + (result || '未知错误') + '\n\n请尝试：\n1. 清除浏览器缓存\n2. 检查是否开启了无痕模式\n3. 换个浏览器试试');
     }
     form.reset();
     render();
@@ -369,11 +369,11 @@ function initHonorsPanel() {
     } else {
       honors.push({ id: Date.now(), title: data.title, year: data.year });
     }
-    var ok = AppData.saveHonors(honors);
-    if (ok) {
-      alert('荣誉已保存！刷新班级网站页面即可看到更新。');
+    var result = AppData.saveHonors(honors);
+    if (result === true) {
+      alert('荣誉已保存！');
     } else {
-      alert('保存失败！请检查浏览器存储空间。');
+      alert('保存失败：' + (result || '未知错误') + '\n\n请尝试：\n1. 清除浏览器缓存\n2. 检查是否开启了无痕模式\n3. 换个浏览器试试');
     }
     form.reset();
     render();
@@ -442,11 +442,11 @@ function initGalleryPanel() {
         emoji: '',
         img: finalImg
       });
-      var ok = AppData.saveGallery(items);
-      if (ok) {
-        alert('照片已保存！刷新班级网站页面即可看到更新。');
+      var result = AppData.saveGallery(items);
+      if (result === true) {
+        alert('照片已保存！');
       } else {
-        alert('保存失败！图片可能过大，请使用较小的图片或URL。');
+        alert('保存失败：' + (result || '未知错误') + '\n\n图片请用URL链接，避免上传大文件。');
       }
       form.reset();
       document.getElementById('galleryFile').value = '';
