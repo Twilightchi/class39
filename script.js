@@ -99,23 +99,44 @@ var AppData = {
     { id: 12, title: '晚自习后', cat: 'study', emoji: '🌙', img: '' }
   ],
 
-  // --- 通用读写 ---
+  // --- 通用读写（localStorage + cookie 双保险）---
   _read: function (key, defaults) {
+    // 先试 localStorage
     try {
       var raw = localStorage.getItem(key);
       if (raw) return JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+    // 再试 cookie
+    try {
+      var cookies = document.cookie.split('; ');
+      for (var i = 0; i < cookies.length; i++) {
+        var parts = cookies[i].split('=');
+        if (parts[0] === key) {
+          return JSON.parse(decodeURIComponent(parts.slice(1).join('=')));
+        }
+      }
     } catch (e) { /* ignore */ }
     return JSON.parse(JSON.stringify(defaults));
   },
 
   _write: function (key, data) {
+    var str = JSON.stringify(data);
+    // 试 localStorage
     try {
-      var str = JSON.stringify(data);
       localStorage.setItem(key, str);
       return true;
-    } catch (e) {
-      console.error('保存失败:', key, e.name, e.message);
-      return e.message || 'unknown';
+    } catch (e1) {
+      // localStorage 失败，试 cookie
+      try {
+        // cookie 最大 4KB，超限则拒绝
+        if (str.length > 3500) {
+          return '数据过大，请勿上传大图片，用图片URL代替';
+        }
+        document.cookie = key + '=' + encodeURIComponent(str) + ';path=/;max-age=31536000;SameSite=Lax';
+        return true;
+      } catch (e2) {
+        return 'Cookie写入失败：' + (e2.message || '未知');
+      }
     }
   },
 
