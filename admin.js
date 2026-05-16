@@ -59,6 +59,15 @@ document.querySelectorAll('.admin-tab').forEach(function (btn) {
 
 // ========== 初始化管理面板 ==========
 function initAdmin() {
+  // 先检测 localStorage 是否可用
+  try {
+    var testKey = '__storage_test__';
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
+  } catch (e) {
+    alert('浏览器存储不可用！\n\n原因：' + (e.message || '未知') + '\n\n请检查：\n1. 是否在无痕/隐私模式下（请用普通模式打开）\n2. 浏览器设置是否阻止了网站数据\n3. iOS Safari 无痕模式下 localStorage 完全禁用\n\n请用普通浏览器模式重新打开。');
+  }
+
   initHeroBgPanel();
   initNoticesPanel();
   initHonorsPanel();
