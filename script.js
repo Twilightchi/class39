@@ -102,6 +102,7 @@ var AppData = {
   // --- 通用读写（localStorage 优先 + API 云端同步）---
   _read: function (key, defaults) {
     var localData = null;
+    var shortKey = key.replace('class39_', '');
     // 1. 先读 localStorage（最快，体验优先）
     try {
       var raw = localStorage.getItem(key);
@@ -110,9 +111,8 @@ var AppData = {
 
     // 2. 尝试云端 API（拉取其他设备的更新）
     try {
-      var apiKey = key.replace('class39_', '');
       var xhr = new XMLHttpRequest();
-      xhr.open('GET', '/api/data/' + apiKey + '?_t=' + Date.now(), false);
+      xhr.open('GET', '/api/data/' + shortKey + '?_t=' + Date.now(), false);
       xhr.timeout = 5000;
       xhr.send();
       if (xhr.status === 200) {
@@ -136,17 +136,22 @@ var AppData = {
             try { localStorage.setItem(key, resultStr); } catch (e) {}
             // 把合并结果异步推回云端（保证其他设备能拿到完整数据）
             AppData._syncToCloud(key, resultStr, !(key.indexOf('messages') >= 0));
+            console.log('[Data] ' + shortKey + ' ← merge(API+' + apiData.length + '+local+' + localData.length + ')=' + result.length);
             return result;
           }
           // 非数组或本地无数据：云端数据直接覆盖（hero_bg、banned_words 等不可合并类型）
           try { localStorage.setItem(key, xhr.responseText); } catch (e) {}
+          console.log('[Data] ' + shortKey + ' ← API(' + (Array.isArray(apiData) ? apiData.length + '条' : typeof apiData) + ')');
           return apiData;
         }
       }
-    } catch (e) { /* API 不可用，用本地数据 */ }
+    } catch (e) { console.warn('[Data] ' + shortKey + ' API 失败: ' + (e.message || '')); }
 
     // 3. 回退：localStorage（已在上面读取）
-    if (localData) return localData;
+    if (localData) {
+      console.log('[Data] ' + shortKey + ' ← localStorage(' + (Array.isArray(localData) ? localData.length + '条' : typeof localData) + ')');
+      return localData;
+    }
 
     // 4. 回退：cookie
     try {
@@ -154,11 +159,13 @@ var AppData = {
       for (var i = 0; i < cookies.length; i++) {
         var parts = cookies[i].split('=');
         if (parts[0] === key) {
+          console.log('[Data] ' + shortKey + ' ← cookie');
           return JSON.parse(decodeURIComponent(parts.slice(1).join('=')));
         }
       }
     } catch (e) { /* ignore */ }
 
+    console.log('[Data] ' + shortKey + ' ← defaults(' + (Array.isArray(defaults) ? defaults.length + '条' : typeof defaults) + ')');
     return JSON.parse(JSON.stringify(defaults));
   },
 
