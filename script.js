@@ -111,7 +111,11 @@ var AppData = {
   _write: function (key, data) {
     try {
       localStorage.setItem(key, JSON.stringify(data));
-    } catch (e) { /* storage full */ }
+      return true;
+    } catch (e) {
+      console.error('保存数据失败:', key, e);
+      return false;
+    }
   },
 
   // --- 公告 ---

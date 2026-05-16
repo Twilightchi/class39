@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(curl -s -o /dev/null -w \"index: %{http_code}\\\\n\" \"https://twilightchi.github.io/class39/\")",
+      "Bash(curl -s -o /dev/null -w \"notices: %{http_code}\\\\n\" \"https://twilightchi.github.io/class39/notices.html\")",
+      "Bash(curl -s -o /dev/null -w \"members: %{http_code}\\\\n\" \"https://twilightchi.github.io/class39/members.html\")",
+      "Bash(curl -s -o /dev/null -w \"messages: %{http_code}\\\\n\" \"https://twilightchi.github.io/class39/messages.html\")",
+      "Bash(curl -s -o /dev/null -w \"admin: %{http_code}\\\\n\" \"https://twilightchi.github.io/class39/admin.html\")"
+    ]
+  }
+}

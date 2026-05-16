@@ -240,7 +240,9 @@ function initNoticesPanel() {
       tag: document.getElementById('noticeTag').value,
       date: document.getElementById('noticeDate').value
     };
-    if (!data.title || !data.content) return;
+    if (!data.title) { alert('请填写公告标题'); return; }
+    if (!data.content) { alert('请填写公告内容'); return; }
+    if (!data.date) { alert('请选择公告日期'); return; }
 
     var notices = AppData.getNotices();
     if (editingId) {
@@ -265,7 +267,12 @@ function initNoticesPanel() {
         date: data.date
       });
     }
-    AppData.saveNotices(notices);
+    var ok = AppData.saveNotices(notices);
+    if (ok) {
+      alert('公告已保存！刷新班级网站页面即可看到更新。');
+    } else {
+      alert('保存失败！请检查浏览器存储空间。');
+    }
     form.reset();
     render();
   });
@@ -344,7 +351,8 @@ function initHonorsPanel() {
       title: document.getElementById('honorTitle').value.trim(),
       year: document.getElementById('honorYear').value.trim()
     };
-    if (!data.title || !data.year) return;
+    if (!data.title) { alert('请填写荣誉名称'); return; }
+    if (!data.year) { alert('请填写获得时间'); return; }
 
     var honors = AppData.getHonors();
     if (editingId) {
@@ -361,7 +369,12 @@ function initHonorsPanel() {
     } else {
       honors.push({ id: Date.now(), title: data.title, year: data.year });
     }
-    AppData.saveHonors(honors);
+    var ok = AppData.saveHonors(honors);
+    if (ok) {
+      alert('荣誉已保存！刷新班级网站页面即可看到更新。');
+    } else {
+      alert('保存失败！请检查浏览器存储空间。');
+    }
     form.reset();
     render();
   });
@@ -414,7 +427,7 @@ function initGalleryPanel() {
     e.preventDefault();
     var title = document.getElementById('galleryTitle').value.trim();
     var cat = document.getElementById('galleryCat').value;
-    if (!title) return;
+    if (!title) { alert('请填写照片标题'); return; }
 
     var imgData = '';
     var fileInput = document.getElementById('galleryFile');
@@ -429,7 +442,12 @@ function initGalleryPanel() {
         emoji: '',
         img: finalImg
       });
-      AppData.saveGallery(items);
+      var ok = AppData.saveGallery(items);
+      if (ok) {
+        alert('照片已保存！刷新班级网站页面即可看到更新。');
+      } else {
+        alert('保存失败！图片可能过大，请使用较小的图片或URL。');
+      }
       form.reset();
       document.getElementById('galleryFile').value = '';
       document.getElementById('galleryUrl').value = '';
