@@ -62,16 +62,17 @@
 
   <div id="sharedFooter"></div>
 
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
   <script>
     injectNav('messages');
     injectFooter();
 
     (function () {
       var currentType = 'real';
-
-      // 填充实名选择器
+      var form = document.getElementById('messageForm');
       var select = document.getElementById('realNameSelect');
+
+      // 填充实名选择器（仅首次）
       var teacherGroup = select.querySelector('optgroup[label="教师"]');
       var studentGroup = select.querySelector('optgroup[label="同学"]');
 
@@ -108,7 +109,6 @@
       });
 
       // 提交
-      var form = document.getElementById('messageForm');
       form.addEventListener('submit', function (e) {
         e.preventDefault();
         var title = document.getElementById('msgTitle').value.trim();
@@ -206,6 +206,8 @@
       }
 
       renderMessages();
+      // 云端数据到达后刷新（从其他设备同步的留言）
+      document.addEventListener('class39DataReady', renderMessages);
     })();
   </script>
 </body>

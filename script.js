@@ -1,6 +1,7 @@
 /* ========================================
    乐陵一中2024级39班 - 青春纪念册 共享脚本
    功能：导航注入、页脚注入、数据管理、违禁词
+   版本：v5 — 异步预取优先 + localStorage落盘 + 云端同步
    ======================================== */
 
 // ========== 全局数据：班级成员 ==========
@@ -99,18 +100,40 @@ var AppData = {
     { id: 12, title: '晚自习后', cat: 'study', emoji: '🌙', img: '' }
   ],
 
+  // 预取缓存：云端数据异步加载到这里
   _prefetchCache: {},
+  // 云端数据是否已就绪
+  _cloudDataReady: false,
+  // 等待云端数据的回调队列
+  _pendingCallbacks: [],
+  // 本次加载是否使用了默认数据（用于判断是否需要刷新）
+  _usedDefaults: {},
 
-  // --- 通用读写（localStorage 优先 + API 云端同步）---
+  // --- 注册云端数据就绪回调（页面用） ---
+  onCloudReady: function (callback) {
+    if (this._cloudDataReady) {
+      callback();
+    } else {
+      this._pendingCallbacks.push(callback);
+    }
+  },
+
+  // --- 通用读取（localStorage 优先 + 预取缓存 + 默认值兜底） ---
   _read: function (key, defaults) {
-    var localData = null;
     var shortKey = key.replace('class39_', '');
-    // 0. 先检查预取缓存（异步预取的结果，避免同步 XHR）
+
+    // 1. 先读 localStorage（最快，本地数据最可靠）
+    var localData = null;
+    try {
+      var raw = localStorage.getItem(key);
+      if (raw) localData = JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+
+    // 2. 检查预取缓存（异步从云端拉取的结果）
     var pf = this._prefetchCache[shortKey];
     if (pf !== undefined && pf !== null) {
-      // 云端有数据：与本地合并或直接使用
+      // 云端数据拿到了：和本地数据合并（数组按 id 去重）
       if (Array.isArray(pf) && Array.isArray(localData) && localData.length > 0) {
-        // merge logic same as below
         var merged2 = {}, item2;
         for (var pi = 0; pi < pf.length; pi++) {
           item2 = pf[pi];
@@ -128,62 +151,21 @@ var AppData = {
         console.log('[Data] ' + shortKey + ' ← merge(prefetch+' + pf.length + '+local+' + localData.length + ')=' + result2.length);
         return result2;
       }
+      // 本地无数据或非数组：直接使用云端数据
       try { localStorage.setItem(key, JSON.stringify(pf)); } catch (e) {}
       console.log('[Data] ' + shortKey + ' ← prefetch(' + (Array.isArray(pf) ? pf.length + '条' : typeof pf) + ')');
       return pf;
     }
 
-    // 1. 先读 localStorage（最快，体验优先）
-    try {
-      var raw = localStorage.getItem(key);
-      if (raw) localData = JSON.parse(raw);
-    } catch (e) { /* ignore */ }
-
-    // 2. 尝试云端 API（拉取其他设备的更新）
-    try {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', '/api/data/' + shortKey + '?_t=' + Date.now(), false);
-      xhr.timeout = 5000;
-      xhr.send();
-      if (xhr.status === 200) {
-        var apiData = JSON.parse(xhr.responseText);
-        if (apiData !== null) {
-          // 如果是数组，与本地数据按 id 合并（防止覆盖其他设备的留言）
-          if (Array.isArray(apiData) && Array.isArray(localData) && localData.length > 0) {
-            var merged = {}, item;
-            for (var ai = 0; ai < apiData.length; ai++) {
-              item = apiData[ai];
-              if (item && item.id != null) merged[item.id] = item;
-            }
-            for (var li = 0; li < localData.length; li++) {
-              item = localData[li];
-              if (item && item.id != null) merged[item.id] = item;
-            }
-            var result = [];
-            for (var mk in merged) { if (merged.hasOwnProperty(mk)) result.push(merged[mk]); }
-            result.sort(function (a, b) { return b.id - a.id; });
-            var resultStr = JSON.stringify(result);
-            try { localStorage.setItem(key, resultStr); } catch (e) {}
-            // 把合并结果异步推回云端（保证其他设备能拿到完整数据）
-            AppData._syncToCloud(key, resultStr, !(key.indexOf('messages') >= 0));
-            console.log('[Data] ' + shortKey + ' ← merge(API+' + apiData.length + '+local+' + localData.length + ')=' + result.length);
-            return result;
-          }
-          // 非数组或本地无数据：云端数据直接覆盖（hero_bg、banned_words 等不可合并类型）
-          try { localStorage.setItem(key, xhr.responseText); } catch (e) {}
-          console.log('[Data] ' + shortKey + ' ← API(' + (Array.isArray(apiData) ? apiData.length + '条' : typeof apiData) + ')');
-          return apiData;
-        }
-      }
-    } catch (e) { console.warn('[Data] ' + shortKey + ' API 失败: ' + (e.message || '')); }
-
-    // 3. 回退：localStorage（已在上面读取）
+    // 3. 有本地数据 → 直接返回（已是最全的，云端同步在 _write 中保证）
     if (localData) {
       console.log('[Data] ' + shortKey + ' ← localStorage(' + (Array.isArray(localData) ? localData.length + '条' : typeof localData) + ')');
+      // 标记：本地有数据，但如果预取还没完成，云端可能有更新的
+      // 等预取完成后会通过 onCloudReady 触发重渲染
       return localData;
     }
 
-    // 4. 回退：cookie
+    // 4. 回退：cookie（localStorage 不可用时的备选）
     try {
       var cookies = document.cookie.split(/;\s*/);
       for (var i = 0; i < cookies.length; i++) {
@@ -195,10 +177,14 @@ var AppData = {
       }
     } catch (e) { /* ignore */ }
 
+    // 5. 最后回退：默认数据
+    // 标记为使用了默认数据，等云端数据到达后需要刷新
+    this._usedDefaults[shortKey] = true;
     console.log('[Data] ' + shortKey + ' ← defaults(' + (Array.isArray(defaults) ? defaults.length + '条' : typeof defaults) + ')');
     return JSON.parse(JSON.stringify(defaults));
   },
 
+  // --- 通用写入（localStorage 立即落盘 + 云端双通道同步） ---
   _write: function (key, data, needsAuth) {
     var str = JSON.stringify(data);
     var shortKey = key.replace('class39_', '');
@@ -217,58 +203,57 @@ var AppData = {
       }
     }
 
-    // 2. 同步写入云端（用同步 XHR 确保数据一定到达 KV）
+    // 2. 云端同步：同步 XHR（桌面端可靠）+ 异步 fetch（移动端兜底）双通道
     var syncOk = false;
+    var self = this;
+    var authHeader = (needsAuth !== false) ? '39ban2024' : null;
+
+    // 通道A：同步 XHR（桌面浏览器可靠，确保数据立即到达云端）
     try {
       var xhr = new XMLHttpRequest();
-      xhr.open('PUT', '/api/data/' + shortKey, false);  // 同步模式：必须等响应
+      xhr.open('PUT', '/api/data/' + shortKey, false);  // 同步
       xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
-      if (needsAuth !== false) {
-        xhr.setRequestHeader('X-Admin-Password', '39ban2024');
+      if (authHeader) {
+        xhr.setRequestHeader('X-Admin-Password', authHeader);
       }
       xhr.timeout = 8000;
       xhr.send(str);
       syncOk = (xhr.status === 200);
     } catch (e) {
-      console.warn('[Sync] PUT ' + shortKey + ' 失败: ' + (e.message || ''));
+      console.warn('[Sync] PUT ' + shortKey + ' 同步失败: ' + (e.message || ''));
     }
+
+    // 通道B：异步 fetch（移动端/微信浏览器兼容，keepalive 确保页面关闭时也能发出）
+    if (typeof fetch !== 'undefined') {
+      var headers = { 'Content-Type': 'application/json; charset=utf-8' };
+      if (authHeader) headers['X-Admin-Password'] = authHeader;
+      fetch('/api/data/' + shortKey, {
+        method: 'PUT',
+        headers: headers,
+        body: str,
+        keepalive: true
+      }).then(function (r) {
+        if (!r.ok) console.warn('[Sync] PUT ' + shortKey + ' async failed: ' + r.status);
+      }).catch(function (e) {
+        console.warn('[Sync] PUT ' + shortKey + ' async error: ' + (e.message || ''));
+      });
+    } else {
+      // 无 fetch 的旧浏览器：用异步 XHR
+      var xhr2 = new XMLHttpRequest();
+      xhr2.open('PUT', '/api/data/' + shortKey, true);
+      xhr2.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+      if (authHeader) xhr2.setRequestHeader('X-Admin-Password', authHeader);
+      xhr2.send(str);
+    }
+
     if (!syncOk) {
-      // 同步失败时，后台再用异步重试一次
-      AppData._syncToCloud(key, str, needsAuth !== false);
+      // 同步失败时提示（异步通道已在上面启动）
+      console.warn('[Sync] PUT ' + shortKey + ' 同步通道失败，已启动异步通道重试');
+    } else {
+      console.log('[Sync] PUT ' + shortKey + ' ← 云端已保存');
     }
 
     return true;
-  },
-
-  // 云端同步辅助（异步 fetch，静默执行）
-  _syncToCloud: function (key, str, needsAuth) {
-    try {
-      var apiKey = key.replace('class39_', '');
-      var headers = { 'Content-Type': 'application/json; charset=utf-8' };
-      if (needsAuth) {
-        headers['X-Admin-Password'] = '39ban2024';
-      }
-      if (typeof fetch !== 'undefined') {
-        fetch('/api/data/' + apiKey, {
-          method: 'PUT',
-          headers: headers,
-          body: str,
-          keepalive: true
-        }).then(function (r) {
-          if (!r.ok) console.warn('[Sync] PUT ' + apiKey + ' failed: ' + r.status);
-        }).catch(function (e) {
-          console.warn('[Sync] PUT ' + apiKey + ' error: ' + (e.message || ''));
-        });
-      } else {
-        var xhr = new XMLHttpRequest();
-        xhr.open('PUT', '/api/data/' + apiKey, true);
-        xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
-        if (needsAuth) {
-          xhr.setRequestHeader('X-Admin-Password', '39ban2024');
-        }
-        xhr.send(str);
-      }
-    } catch (e) { /* 云端不可达，数据已安全存于本地 */ }
   },
 
   // --- 公告 ---
@@ -303,7 +288,7 @@ var AppData = {
     return this._write('class39_hero_bg', bg);
   },
 
-  // --- 留言（公开写入）---
+  // --- 留言（公开写入，无需管理员密码） ---
   getMessages: function () {
     return this._read('class39_messages', []);
   },
@@ -479,17 +464,93 @@ function padZero(n) {
   return n < 10 ? '0' + n : '' + n;
 }
 
-// ========== 异步预取云端数据（避免同步 XHR 阻塞）==========
+// ========== 异步预取云端数据（核心：实现跨设备数据同步） ==========
 (function () {
-  if (typeof fetch === 'undefined') return;
   var keys = ['notices', 'honors', 'gallery', 'hero_bg', 'messages', 'banned_words'];
-  var prefix = 'class39_';
+  var pending = keys.length;
+  var hasFetch = (typeof fetch !== 'undefined');
+
+  function checkAllDone() {
+    pending--;
+    if (pending <= 0) {
+      // 所有预取完成（无论成功失败），通知等待的页面
+      AppData._cloudDataReady = true;
+
+      // 通知通过 onCloudReady 注册的回调
+      var cbs = AppData._pendingCallbacks;
+      AppData._pendingCallbacks = [];
+      for (var i = 0; i < cbs.length; i++) {
+        try { cbs[i](); } catch (e) { console.warn(e); }
+      }
+
+      // 派发全局事件，供各页面监听
+      try {
+        document.dispatchEvent(new CustomEvent('class39DataReady'));
+      } catch (e) {
+        // 旧浏览器兼容
+        try {
+          var evt = document.createEvent('Event');
+          evt.initEvent('class39DataReady', true, false);
+          document.dispatchEvent(evt);
+        } catch (e2) {}
+      }
+      console.log('[Data] 云端预取全部完成，已通知页面刷新');
+    }
+  }
+
+  if (!hasFetch) {
+    // 无 fetch 的旧浏览器：直接用同步 XHR 预取（阻塞但可靠）
+    keys.forEach(function (k) {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/data/' + k + '?_t=' + Date.now(), false);
+        xhr.timeout = 4000;
+        xhr.send();
+        if (xhr.status === 200) {
+          var data = JSON.parse(xhr.responseText);
+          if (data !== null) {
+            AppData._prefetchCache[k] = data;
+            // 同时写入 localStorage，加速下次加载
+            try { localStorage.setItem('class39_' + k, xhr.responseText); } catch (e) {}
+          } else {
+            AppData._prefetchCache[k] = null;
+          }
+        }
+      } catch (e) {
+        AppData._prefetchCache[k] = null;
+      }
+      checkAllDone();
+    });
+    return;
+  }
+
+  // 现代浏览器：异步预取全部 key
   keys.forEach(function (k) {
-    fetch('/api/data/' + k)
-      .then(function (r) { if (!r.ok) throw new Error('status ' + r.status); return r.text(); })
-      .then(function (text) {
-        try { AppData._prefetchCache[k] = JSON.parse(text); } catch (e) {}
+    fetch('/api/data/' + k + '?_t=' + Date.now())
+      .then(function (r) {
+        if (!r.ok) throw new Error('status ' + r.status);
+        return r.text();
       })
-      .catch(function () { AppData._prefetchCache[k] = null; });
+      .then(function (text) {
+        try {
+          var data = JSON.parse(text);
+          if (data !== null) {
+            AppData._prefetchCache[k] = data;
+            // 写入 localStorage，下次加载直接使用本地数据
+            try { localStorage.setItem('class39_' + k, text); } catch (e) {}
+            console.log('[Prefetch] ' + k + ' ← 云端(' + (Array.isArray(data) ? data.length + '条' : typeof data) + ')');
+          } else {
+            AppData._prefetchCache[k] = null;
+          }
+        } catch (e) {
+          AppData._prefetchCache[k] = null;
+        }
+        checkAllDone();
+      })
+      .catch(function (e) {
+        console.warn('[Prefetch] ' + k + ' 失败: ' + (e.message || ''));
+        AppData._prefetchCache[k] = null;
+        checkAllDone();
+      });
   });
 })();

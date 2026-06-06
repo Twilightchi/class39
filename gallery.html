@@ -27,32 +27,41 @@
 
   <div id="sharedFooter"></div>
 
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
   <script>
     injectNav('gallery');
     injectFooter();
 
-    (function () {
+    function renderGalleryPage() {
       var items = AppData.getGallery();
+      document.getElementById('noGallery').style.display = 'none';
       if (items.length === 0) {
         document.getElementById('noGallery').style.display = 'block';
         return;
       }
       renderGallery('galleryGrid', items, false);
+    }
 
-      // 筛选
-      var filterBtns = document.querySelectorAll('.filter-btn');
-      filterBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          filterBtns.forEach(function (b) { b.classList.remove('active'); });
-          btn.classList.add('active');
-          var filter = btn.getAttribute('data-filter');
-          document.querySelectorAll('.gallery-item').forEach(function (item) {
-            item.style.display = (filter === 'all' || item.getAttribute('data-cat') === filter) ? '' : 'none';
-          });
+    // 筛选：使用事件委托，绑定一次即可（不受重渲染影响）
+    (function bindGalleryFilter() {
+      var filterContainer = document.querySelector('.gallery-filter');
+      if (!filterContainer) return;
+      filterContainer.addEventListener('click', function (e) {
+        var btn = e.target.closest('.filter-btn');
+        if (!btn) return;
+        // 更新按钮状态
+        filterContainer.querySelectorAll('.filter-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        // 筛选
+        var filter = btn.getAttribute('data-filter');
+        document.querySelectorAll('.gallery-item').forEach(function (item) {
+          item.style.display = (filter === 'all' || item.getAttribute('data-cat') === filter) ? '' : 'none';
         });
       });
     })();
+
+    renderGalleryPage();
+    document.addEventListener('class39DataReady', renderGalleryPage);
   </script>
 </body>
 </html>

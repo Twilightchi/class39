@@ -37,12 +37,16 @@
 
   <div id="sharedFooter"></div>
 
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
   <script>
     injectNav('index');
     injectFooter();
     initCountdown();
     initHeroBg();
+    // 云端数据到达后刷新背景（如果有自定义背景）
+    document.addEventListener('class39DataReady', function () {
+      initHeroBg();
+    });
   </script>
 </body>
 </html>

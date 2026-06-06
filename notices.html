@@ -21,14 +21,16 @@
 
   <div id="sharedFooter"></div>
 
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
   <script>
     injectNav('notices');
     injectFooter();
 
-    (function () {
+    function renderNotices() {
       var notices = AppData.getNotices();
       var grid = document.getElementById('noticesGrid');
+      grid.innerHTML = '';
+      document.getElementById('noNotices').style.display = 'none';
 
       if (notices.length === 0) {
         document.getElementById('noNotices').style.display = 'block';
@@ -49,7 +51,11 @@
           '<span class="notice-date">' + escapeHTML(n.date) + '</span>';
         grid.appendChild(card);
       }
-    })();
+    }
+
+    renderNotices();
+    // 云端数据到达后刷新（从其他设备同步的数据）
+    document.addEventListener('class39DataReady', renderNotices);
   </script>
 </body>
 </html>

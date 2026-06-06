@@ -21,14 +21,16 @@
 
   <div id="sharedFooter"></div>
 
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
   <script>
     injectNav('honors');
     injectFooter();
 
-    (function () {
+    function renderHonors() {
       var honors = AppData.getHonors();
       var grid = document.getElementById('honorsGrid');
+      grid.innerHTML = '';
+      document.getElementById('noHonors').style.display = 'none';
 
       if (honors.length === 0) {
         document.getElementById('noHonors').style.display = 'block';
@@ -46,7 +48,10 @@
           '<span class="honor-year">' + escapeHTML(h.year) + '</span></div>';
         grid.appendChild(card);
       }
-    })();
+    }
+
+    renderHonors();
+    document.addEventListener('class39DataReady', renderHonors);
   </script>
 </body>
 </html>
