@@ -46,7 +46,13 @@ export async function onRequest(context) {
       base64Data = match[2];
     }
 
-    // Base64 → 二进制
+    // Base64 → 二进制（先清洗数据，atob 对格式要求严格）
+    // 移除所有空白字符和非 base64 字符
+    base64Data = base64Data.replace(/[^A-Za-z0-9+/=]/g, '');
+    // 确保长度是 4 的倍数（标准 base64 要求）
+    while (base64Data.length % 4 !== 0) {
+      base64Data += '=';
+    }
     const binaryStr = atob(base64Data);
     const bytes = new Uint8Array(binaryStr.length);
     for (let i = 0; i < binaryStr.length; i++) {
