@@ -13,7 +13,7 @@ const CORS = {
 
 const ADMIN_PASSWORD = '39ban2024';
 
-const ALLOWED_KEYS = ['notices', 'honors', 'gallery', 'hero_bg', 'messages', 'banned_words', 'cloud_album'];
+const ALLOWED_KEYS = ['notices', 'honors', 'hero_bg', 'messages', 'banned_words', 'cloud_album'];
 const PUBLIC_WRITABLE = ['messages', 'cloud_album'];
 
 export async function onRequest(context) {

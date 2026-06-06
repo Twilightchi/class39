@@ -71,7 +71,6 @@ function initAdmin() {
   initHeroBgPanel();
   initNoticesPanel();
   initHonorsPanel();
-  initGalleryPanel();
   initMessagesPanel();
   initCloudAlbumPanel();
 }
@@ -446,116 +445,7 @@ function initHonorsPanel() {
   render();
 }
 
-// ========== 4. 相册管理 ==========
-function initGalleryPanel() {
-  var grid = document.getElementById('galleryMiniGrid');
-  var form = document.getElementById('galleryForm');
-
-  function render() {
-    var items = AppData.getGallery();
-    if (items.length === 0) {
-      grid.innerHTML = '<p style="text-align:center;color:#999;padding:16px;grid-column:1/-1;">暂无照片，请添加</p>';
-      return;
-    }
-    grid.innerHTML = '';
-    for (var i = 0; i < items.length; i++) {
-      var photo = items[i];
-      var item = document.createElement('div');
-      item.className = 'gallery-mini-item';
-
-      var inner = '';
-      if (photo.img) {
-        inner += '<img src="' + escapeHTML(photo.img) + '" alt="' + escapeHTML(photo.title) + '">';
-      } else {
-        inner += '<div class="mini-placeholder"><span>' + (photo.emoji || '📷') + '</span><span>' + escapeHTML(photo.title) + '</span></div>';
-      }
-      inner += '<button class="mini-del" data-id="' + photo.id + '" title="删除">&times;</button>';
-      inner += '<div style="position:absolute;bottom:0;left:0;right:0;padding:4px 8px;background:rgba(0,0,0,0.5);color:white;font-size:11px;">' + escapeHTML(photo.title) + '</div>';
-
-      item.innerHTML = inner;
-      grid.appendChild(item);
-    }
-
-    grid.querySelectorAll('.mini-del').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        if (!confirm('确定删除这张照片吗？')) return;
-        var id = Number(this.getAttribute('data-id'));
-        var items = AppData.getGallery();
-        AppData.saveGallery(items.filter(function (x) { return x.id !== id; }));
-        render();
-      });
-    });
-  }
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var title = document.getElementById('galleryTitle').value.trim();
-    var cat = document.getElementById('galleryCat').value;
-    if (!title) { alert('请填写照片标题'); return; }
-
-    var imgData = '';
-    var fileInput = document.getElementById('galleryFile');
-    var urlInput = document.getElementById('galleryUrl').value.trim();
-
-    function doAdd(finalImg) {
-      var items = AppData.getGallery();
-      items.push({
-        id: Date.now() + Math.random(),
-        title: title,
-        cat: cat,
-        emoji: '',
-        img: finalImg
-      });
-      var result = AppData.saveGallery(items);
-      if (result === true) {
-        alert('照片已保存！');
-      } else {
-        alert('保存失败：' + (result || '未知错误') + '\n\n图片请用URL链接，避免上传大文件。');
-      }
-      form.reset();
-      document.getElementById('galleryFile').value = '';
-      document.getElementById('galleryUrl').value = '';
-      render();
-    }
-
-    if (fileInput.files && fileInput.files[0]) {
-      if (urlInput && urlInput.value.trim()) {
-        alert('检测到同时选择了文件和URL，将优先使用上传的图片文件');
-      }
-      var reader = new FileReader();
-      reader.onload = function (ev) {
-        var img = new Image();
-        img.onerror = function () { alert("图片加载失败，请检查文件格式"); };
-        img.onload = function () {
-          var canvas = document.createElement('canvas');
-          var maxW = 800;
-          var scale = Math.min(1, maxW / img.width);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-          var ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          var base64 = canvas.toDataURL('image/jpeg', 0.6);
-          // 上传到云端图片 API，避免 base64 撑爆 localStorage
-          uploadImage(base64, function (uploadedUrl) {
-            if (uploadedUrl) {
-              doAdd(uploadedUrl);
-            }
-          });
-        };
-        img.src = ev.target.result;
-      };
-      reader.readAsDataURL(fileInput.files[0]);
-    } else if (urlInput) {
-      doAdd(urlInput);
-    } else {
-      doAdd('');
-    }
-  });
-
-  render();
-}
-
-// ========== 5. 留言管理 + 违禁词 ==========
+// ========== 4. 留言管理 + 违禁词 ==========
 function initMessagesPanel() {
   var msgList = document.getElementById('adminMsgList');
   var bannedList = document.getElementById('bannedWordsList');

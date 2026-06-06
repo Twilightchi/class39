@@ -35,7 +35,6 @@
         <button class="admin-tab active" data-tab="heroBg">首页背景</button>
         <button class="admin-tab" data-tab="notices">公告管理</button>
         <button class="admin-tab" data-tab="honors">荣誉管理</button>
-        <button class="admin-tab" data-tab="gallery">相册管理</button>
         <button class="admin-tab" data-tab="messages">留言管理+违禁词</button>
         <button class="admin-tab" data-tab="cloudAlbum">云相册管理</button>
       </div>
@@ -121,31 +120,7 @@
           <div class="admin-list" id="honorsList"></div>
         </div>
 
-        <!-- ===== 标签页4：相册管理 ===== -->
-        <div class="admin-panel" id="panel-gallery">
-          <h3>相册管理</h3>
-          <div class="admin-form">
-            <form id="galleryForm">
-              <div class="form-row">
-                <input type="text" id="galleryTitle" placeholder="照片标题" required>
-                <select id="galleryCat">
-                  <option value="study">学习时光</option>
-                  <option value="sports">运动风采</option>
-                  <option value="activity">班级活动</option>
-                </select>
-              </div>
-              <div class="form-row">
-                <input type="file" id="galleryFile" accept="image/*" style="flex:0;">
-                <span style="font-size:12px;color:#999;align-self:center;">或</span>
-                <input type="text" id="galleryUrl" placeholder="输入图片URL地址">
-              </div>
-              <button type="submit" class="btn btn-primary" style="margin-top:8px;">添加照片</button>
-            </form>
-          </div>
-          <div class="gallery-mini-grid" id="galleryMiniGrid"></div>
-        </div>
-
-        <!-- ===== 标签页5：留言管理 + 违禁词 ===== -->
+        <!-- ===== 标签页4：留言管理 + 违禁词 ===== -->
         <div class="admin-panel" id="panel-messages">
           <h3>留言管理</h3>
           <div class="admin-list" id="adminMsgList" style="margin-bottom:24px;"></div>

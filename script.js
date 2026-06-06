@@ -85,21 +85,6 @@ var AppData = {
     { id: 2, title: '年级班级组合第一名', year: '2026年高二下半学期' }
   ],
 
-  _defaultGallery: [
-    { id: 1, title: '全班大合影', cat: 'activity', emoji: '📸', img: '' },
-    { id: 2, title: '早读时光', cat: 'study', emoji: '📖', img: '' },
-    { id: 3, title: '运动会入场式', cat: 'sports', emoji: '🏃', img: '' },
-    { id: 4, title: '课堂一景', cat: 'study', emoji: '✍️', img: '' },
-    { id: 5, title: '篮球赛瞬间', cat: 'sports', emoji: '🏀', img: '' },
-    { id: 6, title: '元旦晚会', cat: 'activity', emoji: '🎉', img: '' },
-    { id: 7, title: '自习课上', cat: 'study', emoji: '📝', img: '' },
-    { id: 8, title: '课间操比赛', cat: 'sports', emoji: '💃', img: '' },
-    { id: 9, title: '春游合影', cat: 'activity', emoji: '🌄', img: '' },
-    { id: 10, title: '拔河比赛', cat: 'sports', emoji: '💪', img: '' },
-    { id: 11, title: '主题班会', cat: 'activity', emoji: '🎤', img: '' },
-    { id: 12, title: '晚自习后', cat: 'study', emoji: '🌙', img: '' }
-  ],
-
   // 预取缓存：云端数据异步加载到这里
   _prefetchCache: {},
   // 云端数据是否已就绪
@@ -272,14 +257,6 @@ var AppData = {
     return this._write('class39_honors', honors);
   },
 
-  // --- 相册 ---
-  getGallery: function () {
-    return this._read('class39_gallery', this._defaultGallery);
-  },
-  saveGallery: function (items) {
-    return this._write('class39_gallery', items);
-  },
-
   // --- 首页背景 ---
   getHeroBg: function () {
     return this._read('class39_hero_bg', { type: 'gradient', value: 'default' });
@@ -344,7 +321,6 @@ function injectNav(currentPage) {
     { key: 'notices',  href: '/notices',       label: '公告' },
     { key: 'members',  href: '/members',       label: '班级成员' },
     { key: 'honors',   href: '/honors',        label: '荣誉墙' },
-    { key: 'gallery',  href: '/gallery',       label: '班级相册' },
     { key: 'messages', href: '/messages',      label: '留言板' },
     { key: 'cloud-album', href: '/cloud-album', label: '云相册' }
   ];
@@ -440,35 +416,6 @@ function initHeroBg() {
   }
 }
 
-// ========== 相册渲染（相册页和管理面板共用） ==========
-function renderGallery(containerId, items, showDelete) {
-  var grid = document.getElementById(containerId);
-  if (!grid) return;
-  grid.innerHTML = '';
-
-  for (var i = 0; i < items.length; i++) {
-    var photo = items[i];
-    var item = document.createElement('div');
-    item.className = 'gallery-item';
-    item.setAttribute('data-cat', photo.cat);
-
-    var innerHTML = '';
-    if (photo.img) {
-      innerHTML += '<img src="' + escapeHTML(photo.img) + '" alt="' + escapeHTML(photo.title) + '" class="gallery-img">';
-    } else {
-      innerHTML += '<div class="gallery-placeholder"><span>' + (photo.emoji || '📷') + '</span><span>' + escapeHTML(photo.title) + '</span></div>';
-    }
-    innerHTML += '<div class="gallery-caption">' + escapeHTML(photo.title) + '</div>';
-
-    if (showDelete) {
-      innerHTML += '<button class="gallery-del-btn" data-id="' + photo.id + '" title="删除">&times;</button>';
-    }
-
-    item.innerHTML = innerHTML;
-    grid.appendChild(item);
-  }
-}
-
 // ========== 工具函数：补零 ==========
 function padZero(n) {
   return n < 10 ? '0' + n : '' + n;
@@ -476,7 +423,7 @@ function padZero(n) {
 
 // ========== 异步预取云端数据（核心：实现跨设备数据同步） ==========
 (function () {
-  var keys = ['notices', 'honors', 'gallery', 'hero_bg', 'messages', 'banned_words', 'cloud_album'];
+  var keys = ['notices', 'honors', 'hero_bg', 'messages', 'banned_words', 'cloud_album'];
   var pending = keys.length;
   var hasFetch = (typeof fetch !== 'undefined');
 
