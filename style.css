@@ -1131,3 +1131,187 @@ body {
   font-size: 11px;
   color: var(--text-muted);
 }
+
+/* ========== 云相册灯箱 ========== */
+.lightbox-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.92);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease;
+}
+
+.lightbox-overlay.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.lightbox-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 90vw;
+  max-height: 85vh;
+}
+
+.lightbox-img {
+  max-width: 90vw;
+  max-height: 75vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+}
+
+.lightbox-info {
+  text-align: center;
+  margin-top: 16px;
+  color: white;
+}
+
+.lightbox-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.lightbox-meta {
+  font-size: 13px;
+  opacity: 0.7;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 40px;
+  cursor: pointer;
+  z-index: 10;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  font-family: inherit;
+  padding: 8px;
+}
+
+.lightbox-close:hover {
+  opacity: 1;
+}
+
+.lightbox-prev,
+.lightbox-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: white;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 16px 12px;
+  border-radius: 6px;
+  z-index: 10;
+  transition: background 0.2s;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.lightbox-prev:hover,
+.lightbox-next:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.lightbox-prev { left: 12px; }
+.lightbox-next { right: 12px; }
+
+@media (max-width: 768px) {
+  .lightbox-close {
+    font-size: 32px;
+    top: 10px;
+    right: 12px;
+  }
+  .lightbox-prev,
+  .lightbox-next {
+    font-size: 24px;
+    padding: 12px 8px;
+  }
+  .lightbox-prev { left: 4px; }
+  .lightbox-next { right: 4px; }
+  .lightbox-title { font-size: 15px; }
+}
+
+/* ========== 管理面板 - 云相册管理 ========== */
+.cloud-admin-item {
+  align-items: center !important;
+  gap: 16px;
+}
+
+.cloud-admin-thumb {
+  width: 80px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--admin-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cloud-admin-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cloud-admin-thumb span {
+  font-size: 24px;
+}
+
+.cloud-admin-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cloud-admin-fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cloud-admin-fields label {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  white-space: nowrap;
+  min-width: 48px;
+  text-align: right;
+}
+
+.cloud-admin-fields input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  min-width: 100px;
+}
+
+.cloud-admin-fields input:focus {
+  border-color: var(--admin-primary);
+  outline: none;
+}

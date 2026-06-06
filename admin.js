@@ -73,6 +73,7 @@ function initAdmin() {
   initHonorsPanel();
   initGalleryPanel();
   initMessagesPanel();
+  initCloudAlbumPanel();
 }
 
 // ========== 图片上传辅助函数 ==========
@@ -645,4 +646,92 @@ function initMessagesPanel() {
 
   renderMessages();
   renderBannedWords();
+}
+
+// ========== 6. 云相册管理 ==========
+function initCloudAlbumPanel() {
+  var list = document.getElementById('cloudAdminList');
+
+  function render() {
+    var album = AppData.getCloudAlbum();
+    if (album.length === 0) {
+      list.innerHTML = '<p style="text-align:center;color:#999;padding:16px;">暂无云相册照片</p>';
+      return;
+    }
+    list.innerHTML = '';
+    for (var i = album.length - 1; i >= 0; i--) {
+      var photo = album[i];
+      var time = new Date(photo.time || Date.now());
+      if (isNaN(time.getTime())) time = new Date();
+      var timeStr = time.getFullYear() + '-' + padZero(time.getMonth() + 1) + '-' +
+        padZero(time.getDate()) + ' ' + padZero(time.getHours()) + ':' + padZero(time.getMinutes());
+
+      var item = document.createElement('div');
+      item.className = 'admin-list-item cloud-admin-item';
+      item.setAttribute('data-id', photo.id);
+
+      item.innerHTML =
+        '<div class="cloud-admin-thumb">' +
+          (photo.img ? '<img src="' + escapeHTML(photo.img) + '" alt="" onerror="this.style.display=\'none\'">' : '<span>📷</span>') +
+        '</div>' +
+        '<div class="item-info cloud-admin-info">' +
+          '<div class="cloud-admin-fields">' +
+            '<label>描述：</label>' +
+            '<input type="text" class="cloud-edit-title" value="' + escapeHTML(photo.title || '') + '" data-id="' + photo.id + '" placeholder="照片描述">' +
+          '</div>' +
+          '<div class="cloud-admin-fields">' +
+            '<label>上传者：</label>' +
+            '<input type="text" class="cloud-edit-uploader" value="' + escapeHTML(photo.uploader || '') + '" data-id="' + photo.id + '" placeholder="上传者姓名">' +
+          '</div>' +
+          '<div class="item-meta">🕐 ' + timeStr + '</div>' +
+        '</div>' +
+        '<div class="item-actions">' +
+          '<button class="btn btn-primary btn-sm btn-cloud-save" data-id="' + photo.id + '">保存</button>' +
+          '<button class="btn btn-danger btn-sm btn-cloud-del" data-id="' + photo.id + '">删除</button>' +
+        '</div>';
+
+      list.appendChild(item);
+    }
+
+    // 删除
+    list.querySelectorAll('.btn-cloud-del').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!confirm('确定删除这张照片吗？将从所有设备上移除。')) return;
+        var id = Number(this.getAttribute('data-id'));
+        var album = AppData.getCloudAlbum();
+        AppData.saveCloudAlbum(album.filter(function (x) { return x.id !== id; }));
+        render();
+      });
+    });
+
+    // 保存修改
+    list.querySelectorAll('.btn-cloud-save').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = Number(this.getAttribute('data-id'));
+        var album = AppData.getCloudAlbum();
+        var found = false;
+        for (var j = 0; j < album.length; j++) {
+          if (album[j].id === id) {
+            // 读取输入的新值
+            var itemEl = list.querySelector('.admin-list-item[data-id="' + id + '"]');
+            if (itemEl) {
+              var titleInput = itemEl.querySelector('.cloud-edit-title');
+              var uploaderInput = itemEl.querySelector('.cloud-edit-uploader');
+              if (titleInput) album[j].title = titleInput.value.trim() || '班级瞬间';
+              if (uploaderInput) album[j].uploader = uploaderInput.value.trim() || '未知同学';
+            }
+            found = true;
+            break;
+          }
+        }
+        if (found) {
+          AppData.saveCloudAlbum(album);
+          alert('已保存！所有设备将同步更新。');
+          render();
+        }
+      });
+    });
+  }
+
+  render();
 }

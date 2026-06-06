@@ -52,6 +52,23 @@
     </div>
   </section>
 
+  <!-- ===== 图片放大灯箱 ===== -->
+  <div class="lightbox-overlay" id="lightboxOverlay">
+    <button class="lightbox-close" id="lightboxClose" title="关闭">&times;</button>
+    <button class="lightbox-prev" id="lightboxPrev" title="上一张">&#10094;</button>
+    <button class="lightbox-next" id="lightboxNext" title="下一张">&#10095;</button>
+    <div class="lightbox-content">
+      <img class="lightbox-img" id="lightboxImg" src="" alt="">
+      <div class="lightbox-info">
+        <div class="lightbox-title" id="lightboxTitle"></div>
+        <div class="lightbox-meta">
+          <span id="lightboxUploader"></span>
+          <span id="lightboxTime"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="sharedFooter"></div>
 
   <script src="script.js?v=5"></script>
@@ -212,6 +229,11 @@
         xhr.send(JSON.stringify({ data: base64Data }));
       }
 
+      // 灯箱状态
+      var lightboxOpen = false;
+      var lightboxIndex = -1;
+      var lightboxPhotos = [];
+
       // 渲染云相册
       function renderCloudAlbum() {
         var grid = document.getElementById('cloudAlbumGrid');
@@ -221,17 +243,23 @@
         if (album.length === 0) {
           grid.innerHTML = '';
           noPhotos.style.display = 'block';
+          lightboxPhotos = [];
           return;
         }
 
         noPhotos.style.display = 'none';
         grid.innerHTML = '';
+        lightboxPhotos = [];
 
-        // 最新在上
         for (var i = album.length - 1; i >= 0; i--) {
           var photo = album[i];
+          lightboxPhotos.push(photo);
+          var photoIdx = lightboxPhotos.length - 1;
+
           var card = document.createElement('div');
           card.className = 'cloud-photo-card';
+          card.setAttribute('data-photo-index', photoIdx);
+          card.style.cursor = 'pointer';
 
           var timeVal = photo.time || Date.now();
           var time = new Date(timeVal);
@@ -251,12 +279,67 @@
               '</div>' +
             '</div>';
 
+          card.addEventListener('click', function () {
+            openLightbox(parseInt(this.getAttribute('data-photo-index')));
+          });
+
           grid.appendChild(card);
         }
       }
 
+      // ===== 灯箱 =====
+      function openLightbox(idx) {
+        lightboxIndex = idx;
+        lightboxOpen = true;
+        updateLightbox();
+        document.getElementById('lightboxOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeLightbox() {
+        lightboxOpen = false;
+        document.getElementById('lightboxOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      function updateLightbox() {
+        var p = lightboxPhotos[lightboxIndex];
+        if (!p) return;
+        document.getElementById('lightboxImg').src = p.img;
+        document.getElementById('lightboxTitle').textContent = p.title || '班级瞬间';
+        var t = new Date(p.time || Date.now());
+        if (isNaN(t.getTime())) t = new Date();
+        document.getElementById('lightboxUploader').textContent = '👤 ' + (p.uploader || '未知');
+        document.getElementById('lightboxTime').textContent = '🕐 ' + t.getFullYear() + '-' + padZero(t.getMonth()+1) + '-' + padZero(t.getDate()) + ' ' + padZero(t.getHours()) + ':' + padZero(t.getMinutes());
+        document.getElementById('lightboxPrev').style.display = (lightboxIndex > 0) ? '' : 'none';
+        document.getElementById('lightboxNext').style.display = (lightboxIndex < lightboxPhotos.length - 1) ? '' : 'none';
+      }
+
+      function lightboxPrev() { if (lightboxIndex > 0) { lightboxIndex--; updateLightbox(); } }
+      function lightboxNext() { if (lightboxIndex < lightboxPhotos.length - 1) { lightboxIndex++; updateLightbox(); } }
+
+      document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+      document.getElementById('lightboxPrev').addEventListener('click', function (e) { e.stopPropagation(); lightboxPrev(); });
+      document.getElementById('lightboxNext').addEventListener('click', function (e) { e.stopPropagation(); lightboxNext(); });
+      document.getElementById('lightboxOverlay').addEventListener('click', function (e) {
+        if (e.target === this) closeLightbox();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (!lightboxOpen) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') lightboxPrev();
+        if (e.key === 'ArrowRight') lightboxNext();
+      });
+      (function () {
+        var tsY = 0;
+        var ov = document.getElementById('lightboxOverlay');
+        ov.addEventListener('touchstart', function (e) { tsY = e.touches[0].clientY; }, { passive: true });
+        ov.addEventListener('touchmove', function (e) {
+          if (Math.abs(e.touches[0].clientY - tsY) > 100) closeLightbox();
+        }, { passive: true });
+      })();
+
       renderCloudAlbum();
-      // 云端数据到达后刷新（从其他设备同步的照片）
       document.addEventListener('class39DataReady', renderCloudAlbum);
     })();
   </script>
