@@ -174,7 +174,7 @@ function initHeroBgPanel() {
   btnSaveUrl.addEventListener('click', function () {
     var url = urlInput.value.trim();
     if (!url) return;
-9    preview.style.background = 'url("' + url + '") center/cover no-repeat';
+    preview.style.background = 'url("' + url + '") center/cover no-repeat';
     preview.setAttribute('data-custom-bg', url);
     selectedGradient = null;
     updatePresetSelection();
@@ -282,7 +282,7 @@ function initNoticesPanel() {
         document.getElementById('noticeSubmit').textContent = '更新公告';
         document.getElementById('noticeCancel').style.display = 'inline-block';
         document.querySelector('#panel-notices .admin-form').scrollIntoView();
- ·     });
+      });
     });
   }
 
