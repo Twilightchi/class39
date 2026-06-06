@@ -75,6 +75,38 @@ function initAdmin() {
   initMessagesPanel();
 }
 
+// ========== 图片上传辅助函数 ==========
+function uploadImage(base64Data, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/upload', true);
+  xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+  xhr.setRequestHeader('X-Admin-Password', ADMIN_PASSWORD);
+  xhr.timeout = 20000;
+  xhr.onload = function () {
+    if (xhr.status === 200) {
+      try {
+        var result = JSON.parse(xhr.responseText);
+        if (result.success && result.url) {
+          callback(result.url);
+          return;
+        } else {
+          alert('图片上传失败：' + (result.error || '未知错误'));
+        }
+      } catch (e) {
+        alert('图片上传失败：服务器返回异常');
+      }
+    } else if (xhr.status === 413) {
+      alert('图片过大，请压缩后再上传（建议宽度不超过 800px）');
+    } else {
+      alert('图片上传失败（HTTP ' + xhr.status + '），请检查网络');
+    }
+    callback(null);
+  };
+  xhr.onerror = function () { alert('图片上传失败，请检查网络连接'); callback(null); };
+  xhr.ontimeout = function () { alert('图片上传超时，请重试'); callback(null); };
+  xhr.send(JSON.stringify({ data: base64Data }));
+}
+
 // ========== 1. 首页背景管理 ==========
 function initHeroBgPanel() {
   var presets = document.querySelectorAll('.bg-preset');
@@ -142,7 +174,7 @@ function initHeroBgPanel() {
   btnSaveUrl.addEventListener('click', function () {
     var url = urlInput.value.trim();
     if (!url) return;
-    preview.style.background = 'url("' + url + '") center/cover no-repeat';
+9    preview.style.background = 'url("' + url + '") center/cover no-repeat';
     preview.setAttribute('data-custom-bg', url);
     selectedGradient = null;
     updatePresetSelection();
@@ -152,6 +184,18 @@ function initHeroBgPanel() {
   document.getElementById('btnSaveBg').addEventListener('click', function () {
     var customBg = preview.getAttribute('data-custom-bg');
     if (customBg) {
+      // 如果是 base64 图片，先上传到 API
+      if (customBg.indexOf('data:image/') === 0) {
+        uploadImage(customBg, function (uploadedUrl) {
+          if (uploadedUrl) {
+            AppData.saveHeroBg({ type: 'image', value: uploadedUrl });
+            preview.setAttribute('data-custom-bg', uploadedUrl);
+            alert('首页背景已保存并上传到云端！请打开首页查看效果。');
+          }
+        });
+        return;
+      }
+      // 普通 URL，直接保存
       AppData.saveHeroBg({ type: 'image', value: customBg });
     } else {
       AppData.saveHeroBg({ type: 'gradient', value: selectedGradient || 'default' });
@@ -238,7 +282,7 @@ function initNoticesPanel() {
         document.getElementById('noticeSubmit').textContent = '更新公告';
         document.getElementById('noticeCancel').style.display = 'inline-block';
         document.querySelector('#panel-notices .admin-form').scrollIntoView();
-      });
+ ·     });
     });
   }
 
@@ -483,13 +527,19 @@ function initGalleryPanel() {
         img.onerror = function () { alert("图片加载失败，请检查文件格式"); };
         img.onload = function () {
           var canvas = document.createElement('canvas');
-          var maxW = 400;
+          var maxW = 800;
           var scale = Math.min(1, maxW / img.width);
           canvas.width = img.width * scale;
           canvas.height = img.height * scale;
           var ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          doAdd(canvas.toDataURL('image/jpeg', 0.6));
+          var base64 = canvas.toDataURL('image/jpeg', 0.6);
+          // 上传到云端图片 API，避免 base64 撑爆 localStorage
+          uploadImage(base64, function (uploadedUrl) {
+            if (uploadedUrl) {
+              doAdd(uploadedUrl);
+            }
+          });
         };
         img.src = ev.target.result;
       };
