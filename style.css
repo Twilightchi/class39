@@ -238,26 +238,80 @@ body {
   margin-top: 2px;
 }
 
-/* 向下滚动提示 */
+/* 向下滚动提示 — 现代鼠标+滚轮动画 */
 .hero-scroll-hint {
   position: absolute;
-  bottom: 30px;
+  bottom: 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  color: rgba(255,255,255,0.7);
-  font-size: 13px;
-  animation: bounce 2s infinite;
+  gap: 8px;
+  color: rgba(255,255,255,0.75);
 }
 
-@keyframes bounce {
+/* 鼠标外形 */
+.scroll-mouse {
+  width: 26px;
+  height: 40px;
+  border: 2px solid rgba(255,255,255,0.7);
+  border-radius: 14px;
+  position: relative;
+  animation: floatMouse 2.5s ease-in-out infinite;
+}
+
+/* 鼠标滚轮 */
+.scroll-wheel {
+  width: 4px;
+  height: 8px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 2px;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: scrollWheel 2s ease-in-out infinite;
+}
+
+@keyframes floatMouse {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8px); }
+  50% { transform: translateY(6px); }
 }
 
-.scroll-arrow {
-  font-size: 18px;
+@keyframes scrollWheel {
+  0% { top: 8px; opacity: 1; }
+  50% { top: 18px; opacity: 0.3; }
+  100% { top: 8px; opacity: 1; }
+}
+
+.scroll-text {
+  font-size: 12px;
+  letter-spacing: 3px;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+/* 三层箭头 */
+.scroll-chevrons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: -4px;
+  line-height: 0.6;
+  opacity: 0.5;
+}
+
+.scroll-chevrons span {
+  font-size: 14px;
+  animation: chevronPulse 2s ease-in-out infinite;
+}
+
+.scroll-chevrons span:nth-child(1) { animation-delay: 0s; }
+.scroll-chevrons span:nth-child(2) { animation-delay: 0.25s; }
+.scroll-chevrons span:nth-child(3) { animation-delay: 0.5s; }
+
+@keyframes chevronPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
 }
 
 /* ---------- 通用 Section ---------- */
