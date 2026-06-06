@@ -894,4 +894,240 @@ body {
   .msg-type-btn {
     text-align: center;
   }
+
+  .cloud-photo-card {
+    width: 100%;
+  }
+
+  .cloud-upload-form .cloud-form-row {
+    flex-direction: column;
+  }
+
+  .cloud-file-label {
+    width: 100%;
+  }
+}
+
+/* ========== 云相册 ========== */
+.cloud-upload-box {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow);
+  border: 2px dashed #d0d7de;
+  transition: border-color 0.3s;
+}
+
+.cloud-upload-box:hover {
+  border-color: var(--blue);
+}
+
+.cloud-upload-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.cloud-upload-icon {
+  font-size: 22px;
+}
+
+.cloud-upload-form .cloud-form-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.cloud-name-select {
+  flex: 1;
+  min-width: 180px;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.cloud-name-select:focus {
+  border-color: var(--blue);
+}
+
+.cloud-title-input {
+  flex: 2;
+  min-width: 200px;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.cloud-title-input:focus {
+  border-color: var(--blue);
+}
+
+.cloud-file-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 200px;
+}
+
+.cloud-file-btn {
+  display: inline-block;
+  padding: 10px 18px;
+  background: var(--bg-alt);
+  border: 2px solid #d0d7de;
+  border-radius: 20px;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: all 0.3s;
+}
+
+.cloud-file-btn:hover {
+  background: var(--blue-light);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.cloud-file-name {
+  font-size: 13px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 250px;
+}
+
+.cloud-submit-btn {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--blue), #667eea);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.cloud-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74,144,217,0.3);
+}
+
+.cloud-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cloud-upload-progress {
+  padding: 8px 16px;
+  background: var(--blue-light);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.cloud-progress-text {
+  font-size: 13px;
+  color: var(--blue);
+}
+
+/* 云相册照片网格 */
+.cloud-album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.cloud-photo-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.cloud-photo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.cloud-photo-img-wrap {
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: var(--bg-alt);
+}
+
+.cloud-photo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s;
+}
+
+.cloud-photo-card:hover .cloud-photo-img {
+  transform: scale(1.05);
+}
+
+.cloud-photo-error {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  background: var(--bg-alt);
+}
+
+.cloud-photo-info {
+  padding: 12px 14px;
+}
+
+.cloud-photo-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cloud-photo-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cloud-photo-uploader {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.cloud-photo-time {
+  font-size: 11px;
+  color: var(--text-muted);
 }

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>云相册 - 乐陵一中2024级39班</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="sharedNav"></div>
+
+  <section class="section" style="padding-top:100px;">
+    <div class="container">
+      <h2 class="section-title">☁️ 班级云相册</h2>
+      <p class="section-desc">每位同学都可以上传照片，记录我们的青春时光</p>
+
+      <!-- ===== 上传区域 ===== -->
+      <div class="cloud-upload-box" id="cloudUploadBox">
+        <div class="cloud-upload-header">
+          <span class="cloud-upload-icon">📤</span>
+          <span>上传照片到云端</span>
+        </div>
+        <form class="cloud-upload-form" id="cloudUploadForm">
+          <div class="cloud-form-row">
+            <select id="cloudUploaderName" class="cloud-name-select" required>
+              <option value="">-- 选择你的名字 --</option>
+              <optgroup label="教师"></optgroup>
+              <optgroup label="同学"></optgroup>
+            </select>
+            <input type="text" id="cloudTitle" class="cloud-title-input" placeholder="照片描述（选填，如：运动会合影）" maxlength="30">
+          </div>
+          <div class="cloud-form-row">
+            <label class="cloud-file-label" for="cloudFileInput">
+              <span class="cloud-file-btn">📷 选择照片</span>
+              <span class="cloud-file-name" id="cloudFileName">未选择文件</span>
+            </label>
+            <input type="file" id="cloudFileInput" accept="image/*" style="display:none;">
+            <button type="submit" class="cloud-submit-btn" id="cloudSubmitBtn">上传到云端</button>
+          </div>
+          <div class="cloud-upload-progress" id="cloudUploadProgress" style="display:none;">
+            <span class="cloud-progress-text">正在上传压缩中...</span>
+          </div>
+        </form>
+      </div>
+
+      <!-- ===== 照片网格 ===== -->
+      <div class="cloud-album-grid" id="cloudAlbumGrid"></div>
+      <p id="noCloudPhotos" style="display:none;text-align:center;color:#999;padding:32px;">
+        还没有人上传照片，来做第一个吧 📸
+      </p>
+    </div>
+  </section>
+
+  <div id="sharedFooter"></div>
+
+  <script src="script.js?v=5"></script>
+  <script>
+    injectNav('cloud-album');
+    injectFooter();
+
+    (function () {
+      var form = document.getElementById('cloudUploadForm');
+      var fileInput = document.getElementById('cloudFileInput');
+      var fileName = document.getElementById('cloudFileName');
+      var submitBtn = document.getElementById('cloudSubmitBtn');
+      var progressDiv = document.getElementById('cloudUploadProgress');
+      var select = document.getElementById('cloudUploaderName');
+
+      // 填充名字选择器
+      var teacherGroup = select.querySelector('optgroup[label="教师"]');
+      var studentGroup = select.querySelector('optgroup[label="同学"]');
+
+      CLASS_DATA.teachers.forEach(function (t) {
+        var opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = t.name + '（' + t.role + '）';
+        teacherGroup.appendChild(opt);
+      });
+
+      CLASS_DATA.students.forEach(function (s) {
+        var opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = s.name + (s.role ? '（' + s.role + '）' : '');
+        studentGroup.appendChild(opt);
+      });
+
+      // 文件选择预览
+      fileInput.addEventListener('change', function () {
+        if (this.files && this.files[0]) {
+          fileName.textContent = this.files[0].name;
+        } else {
+          fileName.textContent = '未选择文件';
+        }
+      });
+
+      // 上传提交
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var uploaderName = select.value;
+        if (!uploaderName) { alert('请先选择你的名字'); return; }
+
+        var title = document.getElementById('cloudTitle').value.trim();
+        var file = fileInput.files[0];
+        if (!file) { alert('请选择一张照片'); return; }
+
+        // 检查文件类型
+        if (!file.type.match(/^image\/(jpeg|png|webp|gif)$/)) {
+          alert('仅支持 JPEG、PNG、WebP、GIF 格式的图片');
+          return;
+        }
+
+        // 检查文件大小（前端预检，10MB）
+        if (file.size > 10 * 1024 * 1024) {
+          alert('图片文件过大，请选择小于 10MB 的照片');
+          return;
+        }
+
+        // 显示上传进度
+        submitBtn.disabled = true;
+        submitBtn.textContent = '压缩上传中...';
+        progressDiv.style.display = 'block';
+
+        // 压缩并上传
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var img = new Image();
+          img.onerror = function () {
+            alert('图片加载失败，请检查文件格式');
+            resetUploadUI();
+          };
+          img.onload = function () {
+            var canvas = document.createElement('canvas');
+            var maxW = 1200;
+            var scale = Math.min(1, maxW / img.width);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            var base64 = canvas.toDataURL('image/jpeg', 0.65);
+
+            // 上传到云端
+            cloudUploadImage(base64, function (uploadedUrl) {
+              if (!uploadedUrl) {
+                resetUploadUI();
+                return;
+              }
+
+              // 保存到云相册数据
+              var album = AppData.getCloudAlbum();
+              album.push({
+                id: Date.now() + Math.random(),
+                title: title || '班级瞬间',
+                uploader: uploaderName,
+                time: new Date().toISOString(),
+                img: uploadedUrl
+              });
+              var saveResult = AppData.saveCloudAlbum(album);
+              if (saveResult !== true) {
+                alert('保存失败：' + (saveResult || '未知错误'));
+                resetUploadUI();
+                return;
+              }
+
+              alert('照片已上传到云端！所有同学都能看到 📸');
+              form.reset();
+              fileName.textContent = '未选择文件';
+              fileInput.value = '';
+              resetUploadUI();
+              renderCloudAlbum();
+            });
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      function resetUploadUI() {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '上传到云端';
+        progressDiv.style.display = 'none';
+      }
+
+      // 公开上传图片到云端（无需管理员密码）
+      function cloudUploadImage(base64Data, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/cloud-upload', true);
+        xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+        xhr.timeout = 30000;
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            try {
+              var result = JSON.parse(xhr.responseText);
+              if (result.success && result.url) {
+                callback(result.url);
+                return;
+              }
+              alert('上传失败：' + (result.error || '未知错误'));
+            } catch (e) {
+              alert('上传失败：服务器返回异常');
+            }
+          } else if (xhr.status === 413) {
+            alert('图片过大，请压缩后再上传');
+          } else {
+            alert('上传失败（HTTP ' + xhr.status + '），请检查网络');
+          }
+          callback(null);
+        };
+        xhr.onerror = function () { alert('上传失败，请检查网络连接'); callback(null); };
+        xhr.ontimeout = function () { alert('上传超时，请重试'); callback(null); };
+        xhr.send(JSON.stringify({ data: base64Data }));
+      }
+
+      // 渲染云相册
+      function renderCloudAlbum() {
+        var grid = document.getElementById('cloudAlbumGrid');
+        var noPhotos = document.getElementById('noCloudPhotos');
+        var album = AppData.getCloudAlbum();
+
+        if (album.length === 0) {
+          grid.innerHTML = '';
+          noPhotos.style.display = 'block';
+          return;
+        }
+
+        noPhotos.style.display = 'none';
+        grid.innerHTML = '';
+
+        // 最新在上
+        for (var i = album.length - 1; i >= 0; i--) {
+          var photo = album[i];
+          var card = document.createElement('div');
+          card.className = 'cloud-photo-card';
+
+          var timeVal = photo.time || Date.now();
+          var time = new Date(timeVal);
+          if (isNaN(time.getTime())) time = new Date();
+          var timeStr = time.getFullYear() + '-' + padZero(time.getMonth() + 1) + '-' +
+            padZero(time.getDate()) + ' ' + padZero(time.getHours()) + ':' + padZero(time.getMinutes());
+
+          card.innerHTML =
+            '<div class="cloud-photo-img-wrap">' +
+              '<img src="' + escapeHTML(photo.img) + '" alt="' + escapeHTML(photo.title) + '" class="cloud-photo-img" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=cloud-photo-error>图片加载失败</div>\'">' +
+            '</div>' +
+            '<div class="cloud-photo-info">' +
+              '<div class="cloud-photo-title">' + escapeHTML(photo.title) + '</div>' +
+              '<div class="cloud-photo-meta">' +
+                '<span class="cloud-photo-uploader">👤 ' + escapeHTML(photo.uploader) + '</span>' +
+                '<span class="cloud-photo-time">🕐 ' + timeStr + '</span>' +
+              '</div>' +
+            '</div>';
+
+          grid.appendChild(card);
+        }
+      }
+
+      renderCloudAlbum();
+      // 云端数据到达后刷新（从其他设备同步的照片）
+      document.addEventListener('class39DataReady', renderCloudAlbum);
+    })();
+  </script>
+</body>
+</html>

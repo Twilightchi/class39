@@ -13,7 +13,8 @@ const CORS = {
 
 const ADMIN_PASSWORD = '39ban2024';
 
-const ALLOWED_KEYS = ['notices', 'honors', 'gallery', 'hero_bg', 'messages', 'banned_words'];
+const ALLOWED_KEYS = ['notices', 'honors', 'gallery', 'hero_bg', 'messages', 'banned_words', 'cloud_album'];
+const PUBLIC_WRITABLE = ['messages', 'cloud_album'];
 
 export async function onRequest(context) {
   const { request, env, params } = context;
@@ -41,9 +42,9 @@ export async function onRequest(context) {
     }
   }
 
-  // PUT — 写入（留言公开写入，其他需要管理员密码）
+  // PUT — 写入（messages、cloud_album 公开写入，其他需要管理员密码）
   if (request.method === 'PUT') {
-    if (key !== 'messages') {
+    if (!PUBLIC_WRITABLE.includes(key)) {
       const pw = request.headers.get('X-Admin-Password') || '';
       if (pw !== ADMIN_PASSWORD) {
         return new Response(JSON.stringify({ error: '密码错误，无权限修改' }), { status: 401, headers: CORS });

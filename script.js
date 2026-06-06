@@ -302,6 +302,15 @@ var AppData = {
   },
   saveBannedWords: function (words) {
     return this._write('class39_banned_words', words);
+  },
+
+  // --- 云相册（公开读写，跨设备同步） ---
+  _defaultCloudAlbum: [],
+  getCloudAlbum: function () {
+    return this._read('class39_cloud_album', this._defaultCloudAlbum);
+  },
+  saveCloudAlbum: function (album) {
+    return this._write('class39_cloud_album', album, false);  // false = 无需管理员密码
   }
 };
 
@@ -336,7 +345,8 @@ function injectNav(currentPage) {
     { key: 'members',  href: '/members',       label: '班级成员' },
     { key: 'honors',   href: '/honors',        label: '荣誉墙' },
     { key: 'gallery',  href: '/gallery',       label: '班级相册' },
-    { key: 'messages', href: '/messages',      label: '留言板' }
+    { key: 'messages', href: '/messages',      label: '留言板' },
+    { key: 'cloud-album', href: '/cloud-album', label: '云相册' }
   ];
 
   var linksHTML = '';
@@ -466,7 +476,7 @@ function padZero(n) {
 
 // ========== 异步预取云端数据（核心：实现跨设备数据同步） ==========
 (function () {
-  var keys = ['notices', 'honors', 'gallery', 'hero_bg', 'messages', 'banned_words'];
+  var keys = ['notices', 'honors', 'gallery', 'hero_bg', 'messages', 'banned_words', 'cloud_album'];
   var pending = keys.length;
   var hasFetch = (typeof fetch !== 'undefined');
 
